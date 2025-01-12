@@ -1,4 +1,5 @@
 import Mathlib
+import Polydim.GoingDown.PrimeSpectrum
 
 variable {A B : Type*} [CommRing A] [CommRing B] [Algebra A B]
 variable [Module.Flat A B]
@@ -77,11 +78,9 @@ lemma Ideal.comap_surjective_of_faithfullyFlat [Module.FaithfullyFlat A B] :
 /-- If `B` is a faithfully flat `A`-algebra, the induced map on the prime spectrum is
 surjective. -/
 lemma PrimeSpectrum.comap_surjective_of_faithfullyFlat [Module.FaithfullyFlat A B] :
-    Function.Surjective (PrimeSpectrum.comap (algebraMap A B)) := by
-  intro I
-  have : (I.asIdeal.map (algebraMap A B)).IsPrime := by sorry
-  -- easy from `Ideal.comap_surjective_of_faithfullyFlat`
-  sorry
+    Function.Surjective (PrimeSpectrum.comap (algebraMap A B)) := fun I ↦
+  (PrimeSpectrum.mem_range_comap_iff (algebraMap A B) I).mpr
+      I.asIdeal.comap_map_eq_self_of_faithfullyFlat
 
 -- Bonus
 /-- If `A →+* B` is flat and surjective on prime spectra, `B` is a faithfully flat `A`-algebra. -/
