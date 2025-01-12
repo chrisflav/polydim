@@ -24,37 +24,30 @@ lemma Module.FaithfullyFlat.tensorProduct_mk_injective [Module.FaithfullyFlat A 
     Function.Injective (TensorProduct.mk A B M 1) := by
   set τ := TensorProduct.mk A B M 1
   apply ker_eq_bot.mp
-  have : Function.Injective (rTensor B τ) := by
-    set g := TensorProduct.assoc A B M B
-    have : (rTensor B τ) = g.symm.comp (TensorProduct.mk A B (M ⊗[A] B) 1) := by
-      unfold rTensor τ g
+  have : Function.Injective (lTensor B τ) := by
+    set g := TensorProduct.leftComm A B B M
+    have : (lTensor B τ) = g.symm.comp (TensorProduct.mk A B (B ⊗[A] M) 1) := by
+      unfold lTensor τ g
       apply TensorProduct.ext'
       intro x y
-      simp only [map_tmul, mk_apply, id_coe, id_eq, coe_comp, LinearEquiv.coe_coe,
-        Function.comp_apply, assoc_symm_tmul]
-    rw [this]
-    simp only [coe_comp, LinearEquiv.coe_coe, EmbeddingLike.comp_injective]
-    letI : Module B (M ⊗[A] B) := by
-
-      sorry
-    letI : IsScalarTower A B (M ⊗[A] B) := by
-
-      sorry
-    exact Module.tensorProduct_mk_injective_of_isScalarTower (M ⊗[A] B)
-  have h1 := ker_eq_bot.mpr this ▸ (Module.Flat.rTensor_exact B <| exact_subtype_ker_map τ).linearMap_ker_eq
-  have h2 : Function.Injective (rTensor B (ker τ).subtype) := by
-    have h3 := (Module.Flat.rTensor_exact B <| exact_subtype_ker_map (ker τ).subtype).linearMap_ker_eq
+      simp only [map_tmul, id_coe, id_eq, mk_apply, coe_comp, LinearEquiv.coe_coe,
+        Function.comp_apply, leftComm_symm_tmul]
+    rw [this, coe_comp, LinearEquiv.coe_coe, EmbeddingLike.comp_injective]
+    exact Module.tensorProduct_mk_injective_of_isScalarTower _
+  have h1 := ker_eq_bot.mpr this ▸ (Module.Flat.lTensor_exact B <| exact_subtype_ker_map τ).linearMap_ker_eq
+  have h2 : Function.Injective (lTensor B (ker τ).subtype) := by
+    have h3 := (Module.Flat.lTensor_exact B <| exact_subtype_ker_map (ker τ).subtype).linearMap_ker_eq
     have : (ker (ker τ).subtype).subtype = 0 :=
       (Submodule.ker_subtype (ker τ)) ▸ (Subsingleton.eq_zero _)
-    simp only [this, rTensor_zero, range_zero] at h3
+    rw [this, lTensor_zero, range_zero] at h3
     exact ker_eq_bot.mp h3
-  have : Subsingleton (ker τ ⊗[A] B) := by
+  have : Subsingleton (B ⊗[A] ker τ) := by
     apply subsingleton_iff.mpr
     intro x y
-    have h : ∀ a : (ker τ) ⊗[A] B, (rTensor B (ker τ).subtype) a = 0 :=
-      fun a ↦ (Submodule.mem_bot _).mp (h1.symm ▸ mem_range_self (rTensor B (ker τ).subtype) a)
+    have h : ∀ a : B ⊗[A] (ker τ), (lTensor B (ker τ).subtype) a = 0 :=
+      fun a ↦ (Submodule.mem_bot _).mp (h1.symm ▸ mem_range_self (lTensor B (ker τ).subtype) a)
     exact h2 (by rw [h x, h y])
-  exact Submodule.subsingleton_iff_eq_bot.mp (rTensor_reflects_triviality A B (ker τ))
+  exact Submodule.subsingleton_iff_eq_bot.mp (lTensor_reflects_triviality A B (ker τ))
 
 -- Bonus
 /-- If `M →ₗ[A] B ⊗[A] M` is injective for every `A`-module `M`, `B` is a faithfully flat
