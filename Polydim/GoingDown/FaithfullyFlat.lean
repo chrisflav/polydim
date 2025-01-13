@@ -1,7 +1,9 @@
 import Mathlib
 import Polydim.GoingDown.PrimeSpectrum
 
-variable {A B : Type*} [CommRing A] [CommRing B] [Algebra A B]
+universe u v
+
+variable {A : Type u} {B : Type v} [CommRing A] [CommRing B] [Algebra A B]
 variable [Module.Flat A B]
 
 open TensorProduct LinearMap
@@ -54,19 +56,94 @@ lemma Module.FaithfullyFlat.tensorProduct_mk_injective [Module.FaithfullyFlat A 
 /-- If `M →ₗ[A] B ⊗[A] M` is injective for every `A`-module `M`, `B` is a faithfully flat
 `A`-algebra. -/
 lemma Module.FaithfullyFlat.of_tensorProduct_mk_injective
-    (h : ∀ (M : Type*) [AddCommGroup M] [Module A M], Function.Injective (TensorProduct.mk A B M)) :
-    FaithfullyFlat A B :=
+    (h : ∀ (M : Type (max u v)) [AddCommGroup M] [Module A M], Function.Injective (TensorProduct.mk A B M 1)) :
+    FaithfullyFlat A B := by
+  rw [Module.FaithfullyFlat.iff_flat_and_lTensor_faithful]
+  constructor
+  · assumption
+  · intro N _ _ hN
+    haveI : Nontrivial N := hN
+    exact Function.Injective.nontrivial <| h N
   -- easy, use `Module.FaithfullyFlat.iff_flat_and_lTensor_faithful`
-  sorry
+
+section
+variable (B : Type v) [CommRing A] [CommRing B] [Algebra A B] (I : Ideal A)
+
+noncomputable def TensorProduct.tensorQuotEquivQuotIdealMap' (I : Ideal A) :
+    TensorProduct A B (A ⧸ I) ≃ₗ[A] B ⧸ (I.map <| algebraMap A B) :=
+  (TensorProduct.tensorQuotEquivQuotSMul B I)
+  ≪≫ₗ (Submodule.quotEquivOfEq _ _ (Ideal.smul_top_eq_map I))
+  ≪≫ₗ (Submodule.Quotient.restrictScalarsEquiv A (I.map <| algebraMap A B))
+
+@[simp]
+lemma TensorProduct.tensorQuotEquivQuotIdealMap'_apply (b : B) (a : A) :
+    TensorProduct.tensorQuotEquivQuotIdealMap' B I (b ⊗ₜ[A] (Ideal.Quotient.mk I) a) =
+    Submodule.Quotient.mk (a • b) :=
+  rfl
+
+@[simp]
+lemma TensorProduct.tensorQuotEquivQuotIdealMap'_symm_mk (b : B) :
+    (TensorProduct.tensorQuotEquivQuotIdealMap' B I).symm
+    (Ideal.Quotient.mk (I.map <| algebraMap A B) b) = b ⊗ₜ[A] 1 :=
+  rfl
+
+noncomputable def TensorProduct.tensorQuotEquivQuotIdealMap'' (I : Ideal A) :
+    (B ⧸ (I.map <| algebraMap A B)) ≃ₐ[A] TensorProduct A B (A ⧸ I) :=
+  AlgEquiv.ofLinearEquiv (TensorProduct.tensorQuotEquivQuotIdealMap' B I).symm
+  (by
+    have := TensorProduct.tensorQuotEquivQuotIdealMap'_symm_mk B I 1
+    simpa only [map_one]
+  )
+  (by
+    intro x y
+    induction' x using Submodule.Quotient.induction_on with u
+    induction' y using Submodule.Quotient.induction_on with v
+    simp only [Ideal.Quotient.mk_eq_mk, ← map_mul,
+      TensorProduct.tensorQuotEquivQuotIdealMap'_symm_mk, Algebra.TensorProduct.tmul_mul_tmul,
+      mul_one]
+  )
+
+noncomputable def TensorProduct.tensorQuotEquivQuotIdealMap (I : Ideal A) :
+    TensorProduct A B (A ⧸ I) ≃ₐ[A] B ⧸ (I.map <| algebraMap A B) :=
+  (TensorProduct.tensorQuotEquivQuotIdealMap'' B I).symm
+
+@[simp]
+lemma TensorProduct.tensorQuotEquivQuotIdealMap_apply (b : B) (a : A) :
+    TensorProduct.tensorQuotEquivQuotIdealMap B I (b ⊗ₜ[A] (Ideal.Quotient.mk I) a) =
+    Submodule.Quotient.mk (a • b) :=
+  rfl
+
+@[simp]
+lemma TensorProduct.tensorQuotEquivQuotIdealMap_symm_mk (b : B) :
+    (TensorProduct.tensorQuotEquivQuotIdealMap B I).symm
+    (Ideal.Quotient.mk (I.map <| algebraMap A B) b) = b ⊗ₜ[A] 1 :=
+  rfl
+
+end
 
 /-- If `B` is a faithfully flat `A`-algebra, the preimage of the pushforward of any
 ideal `I` is again `I`. -/
 lemma Ideal.comap_map_eq_self_of_faithfullyFlat [Module.FaithfullyFlat A B] (I : Ideal A) :
     (I.map (algebraMap A B)).comap (algebraMap A B) = I := by
   apply le_antisymm
-  · -- use `Module.FaithfullyFlat.tensorProduct_mk_injective` for `M = A ⧸ I`
-    -- and consider the map `A / I →+* (A / I) ⊗[A] B ≃+* B ⧸ (I.map <| algebraMap A B)`
-    sorry
+  · have inj : Function.Injective (AlgEquiv.toLinearMap (TensorProduct.tensorQuotEquivQuotIdealMap B I) ∘ₗ
+        TensorProduct.mk A B (A ⧸ I) 1) := by
+      rw [LinearMap.coe_comp]
+      apply Function.Injective.comp
+      · exact AlgEquiv.injective _
+      · exact Module.FaithfullyFlat.tensorProduct_mk_injective (A ⧸ I)
+    intro x hx
+    rw [Ideal.mem_comap] at hx
+    rw [← Ideal.Quotient.eq_zero_iff_mem] at *
+    have : (AlgEquiv.toLinearMap (TensorProduct.tensorQuotEquivQuotIdealMap B I) ∘ₗ
+        TensorProduct.mk A B (A ⧸ I) 1) x = 0 := by
+      simp only [coe_comp, Function.comp_apply, mk_apply, AlgEquiv.toLinearMap_apply,
+        tensorQuotEquivQuotIdealMap_apply, Quotient.mk_eq_mk]
+      rw [← Algebra.algebraMap_eq_smul_one, hx]
+    apply inj
+    rw [this]
+    simp only [LinearMap.coe_comp, LinearEquiv.coe_coe, Function.comp_apply, TensorProduct.mk_apply,
+      TensorProduct.tmul_zero, map_zero]
   · exact le_comap_map
 
 /-- If `B` is a faithfully-flat `A`-algebra, every ideal in `A` is the preimage of some ideal
