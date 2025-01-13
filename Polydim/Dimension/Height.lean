@@ -62,7 +62,64 @@ variable {α : Type u_1} {s : Set α} [Preorder α] (a : α)
 
 theorem chainHeight_eq_krullDim (hs : Nonempty s): s.chainHeight = Order.krullDim s := sorry
 theorem chainHeight_le_eq_height : Set.chainHeight {b | b ≤ a} = Order.height a := sorry
-theorem Order.hieght_eq_krullDim_le : Order.height a = Order.krullDim {b // b ≤ a} := sorry
+
+def LTSeries.SubtypeLeEquivLastLe :
+    LTSeries { b // b ≤ a } ≃ { p : LTSeries α // RelSeries.last p ≤ a } where
+  toFun p := ⟨LTSeries.map p (fun b ↦ b.val) (Subtype.strictMono_coe _), by
+    rw [LTSeries.last_map]
+    exact (RelSeries.last p).prop⟩
+  invFun p := {
+    length := p.val.length
+    toFun n := ⟨p.val.toFun n, by
+      apply le_trans
+      · exact LTSeries.monotone _ <| Fin.le_last n
+      · exact p.prop
+    ⟩
+    step _ := p.val.step _
+  }
+  left_inv p := rfl
+  right_inv p := rfl
+
+lemma LTSeries.SubtypeLeEquivLastLe_length (p : LTSeries { b // b ≤ a }) :
+    (LTSeries.SubtypeLeEquivLastLe a p).val.length = p.length :=
+  rfl
+
+lemma LTSeries.SubtypeLeEquivLastLe_symm_length (p : { p : LTSeries α // RelSeries.last p ≤ a }) :
+    ((LTSeries.SubtypeLeEquivLastLe a).symm p).length = p.val.length :=
+  rfl
+
+lemma LTSeries.SubtypeLeEquivLastLe_head (p : LTSeries { b // b ≤ a }) :
+    RelSeries.head (LTSeries.SubtypeLeEquivLastLe a p).val = RelSeries.head p :=
+  rfl
+
+lemma LTSeries.SubtypeLeEquivLastLe_symm_head (p : { p : LTSeries α // RelSeries.last p ≤ a }) :
+    RelSeries.head ((LTSeries.SubtypeLeEquivLastLe a).symm p) = RelSeries.head p.val :=
+  rfl
+
+lemma LTSeries.SubtypeLeEquivLastLe_last (p : LTSeries { b // b ≤ a }) :
+    RelSeries.last (LTSeries.SubtypeLeEquivLastLe a p).val = RelSeries.last p :=
+  rfl
+
+lemma LTSeries.SubtypeLeEquivLastLe_symm_last (p : { p : LTSeries α // RelSeries.last p ≤ a }) :
+    RelSeries.last ((LTSeries.SubtypeLeEquivLastLe a).symm p) = RelSeries.last p.val :=
+  rfl
+
+theorem Order.hieght_eq_krullDim_le : Order.height a = Order.krullDim {b // b ≤ a} := by
+
+  haveI : Nonempty { b // b ≤ a } := by
+    use a
+  rw [Order.krullDim_eq_iSup_length, WithBot.coe_inj, Order.height]
+  apply le_antisymm
+  · simp only [iSup_le_iff]
+    intro p hp
+    rw [← LTSeries.SubtypeLeEquivLastLe_symm_length a ⟨p, hp⟩]
+    exact le_iSup_iff.mpr fun _ h ↦ h ((LTSeries.SubtypeLeEquivLastLe a).symm ⟨p, hp⟩)
+  · rw [iSup_le_iff]
+    intro p
+    rw [← LTSeries.map_length p (fun b ↦ b.val) (Subtype.strictMono_coe _)]
+    apply Order.length_le_height
+    rw [LTSeries.last_map _ _ _]
+    exact (RelSeries.last p).prop
 
 end
 
