@@ -13,6 +13,53 @@ lemma Ideal.primeHeight_eq_ringKrullDim (p : Ideal A) [p.IsPrime] :
     p.primeHeight = ringKrullDim (Localization.AtPrime p) :=
   sorry
 
+
+section
+
+#check PrimeSpectrum.equivSubtype
+#check IsLocalization.AtPrime.orderIsoOfPrime
+#check Order.krullDim_eq_of_orderIso
+#check Subtype.strictMono_coe
+
+def PrimeSpectrum.orderIso (R : Type*) [CommSemiring R] :
+    PrimeSpectrum R ≃o { q : Ideal R // q.IsPrime } :=
+  Equiv.toOrderIso (PrimeSpectrum.equivSubtype R)
+  (fun _ _ hle ↦ hle) (fun _ _ hle ↦ hle)
+
+def PrimeSpectrum.orderIsoOfProp (R : Type*) [CommSemiring R] (motive : Ideal R → Prop) :
+    { q : PrimeSpectrum R // motive q.asIdeal } ≃o { q : Ideal R // q.IsPrime ∧ motive q} where
+  toFun q := ⟨q.val.asIdeal, ⟨q.val.isPrime, q.prop⟩⟩
+  invFun q := ⟨⟨q, q.prop.1⟩, q.prop.2⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+  map_rel_iff' := by
+    intro p q
+    rfl
+
+def IsLocalization.AtPrime.orderIsoOfPrimeSpectrum {R : Type*} [CommSemiring R] (S : Type*)
+    [CommSemiring S] [Algebra R S] (p : Ideal R) [hp : p.IsPrime] [IsLocalization.AtPrime S p] :
+    PrimeSpectrum S ≃o { q : PrimeSpectrum R // q ≤ ⟨p, hp⟩ } :=
+  OrderIso.trans
+  (OrderIso.trans (PrimeSpectrum.orderIso S) (IsLocalization.AtPrime.orderIsoOfPrime S p))
+  (PrimeSpectrum.orderIsoOfProp R (fun I ↦ (I ≤ p))).symm
+
+end
+
+section
+
+#check Order.krullDim_le_of_strictMono
+#check Order.height_le_height_apply_of_strictMono
+
+variable {α : Type u_1} {s : Set α} [Preorder α] (a : α)
+
+theorem chainHeight_eq_krullDim (hs : Nonempty s): s.chainHeight = Order.krullDim s := sorry
+theorem chainHeight_le_eq_height : Set.chainHeight {b | b ≤ a} = Order.height a := sorry
+theorem Order.hieght_eq_krullDim_le : Order.height a = Order.krullDim {b // b ≤ a} := sorry
+
+end
+
+
+
 /-- If `B = Aₚ`, `dim B = ht(p)`. -/
 lemma IsLocalization.primeHeight_eq_ringKrullDim (p : Ideal A) [p.IsPrime]
     [Algebra A B] [IsLocalization.AtPrime B p] :
