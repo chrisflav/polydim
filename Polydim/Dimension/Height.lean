@@ -5,10 +5,10 @@ variable {A B : Type*} [CommRing A] [CommRing B]
 /-- The height of a prime ideal in a ring is the supremum over the lengths of prime ideal
 chains ending at `p`. -/
 noncomputable def Ideal.primeHeight (p : Ideal A) : WithTop ℕ :=
-  Set.chainHeight { q : Ideal A | q.IsPrime ∧ q ≤ p }
+  Set.chainHeight { q : Ideal A | q.IsPrime ∧ q < p }
 
 lemma chainHeight_eq_orderHeight {α : Type*} [Preorder α] (p : α) :
-    Set.chainHeight { q : α | q ≤ p } = Order.height p := by
+    Set.chainHeight { q : α | q < p } = Order.height p := by
   sorry
 
 lemma Ideal.primeHeight_eq_orderheight (p : Ideal A) [hp : p.IsPrime] :
@@ -176,9 +176,24 @@ lemma Ideal.exists_isMaximal_height_eq_of_nontrivial [Nontrivial A] :
     ∃ (p : Ideal A), p.IsMaximal ∧ p.primeHeight = ringKrullDim A :=
   sorry
 
-lemma height_eq_of_ringEquiv (e : A ≃+* B) (p : Ideal A) [p.IsPrime] :
-    (p.map e).primeHeight = p.primeHeight :=
-  sorry
+lemma height_eq_of_ringEquiv (e : A ≃+* B) (p : Ideal A) [hp : p.IsPrime] :
+    (p.map e).primeHeight = p.primeHeight := by
+  repeat rw [Ideal.primeHeight_eq_orderheight]
+  set g := PrimeSpectrum.comapEquiv e
+  have eq : Ideal.map e p = Ideal.comap e.symm p := Ideal.map_comap_of_equiv e
+  set f : PrimeSpectrum A ≃o PrimeSpectrum B := { g with
+    map_rel_iff' := by
+      intro a b
+      unfold g PrimeSpectrum.comapEquiv RingHom.specComap
+      simp only [RingEquiv.toRingHom_eq_coe, Equiv.coe_fn_mk, ← PrimeSpectrum.asIdeal_le_asIdeal,
+        ← Ideal.map_le_iff_le_comap, Ideal.map_comap_of_equiv, RingEquiv.symm_symm]
+      apply Iff.of_eq
+      congr
+      calc
+        _ = Ideal.comap e.toRingHom (Ideal.comap (e.symm.toRingHom) a.asIdeal) := by rfl
+        _ = _ := by simp only [Ideal.comap_comap, RingEquiv.toRingHom_eq_coe, RingEquiv.symm_comp, Ideal.comap_id] }
+  rw [← Order.height_orderIso f ⟨p, hp⟩]
+  congr
 
 lemma IsLocalization.height_eq_of_disjoint [Algebra A B] (M : Submonoid A)
     [IsLocalization M B] (p : Ideal A) [p.IsPrime] (h : Disjoint (M : Set A) (p : Set A)) :
