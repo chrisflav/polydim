@@ -47,8 +47,13 @@ lemma Ideal.primeHeight_polynomial_of_isMaximal [IsNoetherianRing A] (p : Ideal 
     let P' : Ideal (A ⧸ p)[X] :=
       Ideal.map e <| Ideal.map (algebraMap A[X] <| A[X] ⧸ Ideal.map (algebraMap A A[X]) p) P
     -- use that `P'` is a maximal ideal of `(A ⧸ p)[X]`
-    have : P'.primeHeight = 1 := sorry
-    sorry
+    have : P'.primeHeight = 1 :=
+      sorry
+    have : (map (algebraMap A[X] (A[X] ⧸ map (algebraMap A A[X]) p)) P).IsPrime :=
+      sorry
+    simp only [P'] at this
+    rwa [← height_eq_of_ringEquiv e <|
+      Ideal.map (algebraMap A[X] <| A[X] ⧸ Ideal.map (algebraMap A A[X]) p) P]
   rw [primeHeight_eq_primeHeight_add_of_liesOver_of_flat p, this]
 
 /-- Let `p` be a prime ideal of `A`. If `P` is a prime ideal of `A[X]` maximal
