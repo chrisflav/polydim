@@ -7,7 +7,7 @@ variable {A : Type*} [CommRing A]
 open Polynomial
 
 -- for some reason this is missing in mathlib, but we have the existence of a basis
-instance : Module.Free A A[X] := sorry
+instance : Module.Free A A[X] := Module.Free.of_basis <| Polynomial.basisMonomials A
 
 /-- `(A ⧸ I)[X]` is isomorphic to `A[X] / I`. -/
 def polynomialQuotient (I : Ideal A) :
@@ -46,8 +46,6 @@ lemma Ideal.primeHeight_polynomial [IsNoetherianRing A] (p : Ideal A)
 
 lemma Ideal.exists_ideal_liesOver_polynomial_of_isPrime [Nontrivial A] (p : Ideal A)
     [p.IsPrime] : ∃ (P : Ideal A[X]), P.IsPrime ∧ P.LiesOver p := by
-  letI := Polynomial.nontrivial_iff.mpr (by assumption)
-  letI : Module.Free A A[X] := Module.Free.of_basis <| Polynomial.basisMonomials A
   letI := Module.FaithfullyFlat.instOfNontrivialOfFree A A[X]
   obtain ⟨P, hP⟩ := PrimeSpectrum.comap_surjective_of_faithfullyFlat (B := A[X]) ⟨p, by assumption⟩
   exact ⟨P.asIdeal, ⟨PrimeSpectrum.isPrime P, ⟨by rw [Ideal.under_def, ← PrimeSpectrum.comap_asIdeal, hP]⟩⟩⟩
