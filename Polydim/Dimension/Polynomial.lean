@@ -19,8 +19,7 @@ among the prime ideals lying over `p`, `ht(P) = ht(p) + 1`. -/
 lemma Ideal.primeHeight_polynomial_of_isMaximal [IsNoetherianRing A] (p : Ideal A)
     [p.IsMaximal] (P : Ideal A[X]) [P.IsMaximal] [P.LiesOver p] :
     P.primeHeight = p.primeHeight + 1 := by
-  have : (Ideal.map (algebraMap A[X] <|
-      A[X] ⧸ Ideal.map (algebraMap A A[X]) p) P).primeHeight = 1 := by
+  have : (P.map (Ideal.Quotient.mk (Ideal.map (algebraMap A A[X]) p))).primeHeight = 1 := by
     let e : (A[X] ⧸ Ideal.map (algebraMap A A[X]) p) ≃+* (A ⧸ p)[X] :=
       polynomialQuotient p
     let P' : Ideal (A ⧸ p)[X] :=
@@ -28,11 +27,11 @@ lemma Ideal.primeHeight_polynomial_of_isMaximal [IsNoetherianRing A] (p : Ideal 
     -- use that `P'` is a maximal ideal of `(A ⧸ p)[X]`
     have : P'.primeHeight = 1 :=
       sorry
-    have : (map (algebraMap A[X] (A[X] ⧸ map (algebraMap A A[X]) p)) P).IsPrime :=
+    have : (P.map (Ideal.Quotient.mk <| map (algebraMap A A[X]) p)).IsPrime :=
       sorry
     simp only [P'] at this
     rwa [← height_eq_of_ringEquiv e <|
-      Ideal.map (algebraMap A[X] <| A[X] ⧸ Ideal.map (algebraMap A A[X]) p) P]
+      P.map (Ideal.Quotient.mk <| p.map (algebraMap A A[X]))]
   rw [primeHeight_eq_primeHeight_add_of_liesOver_of_flat p, this]
 
 /-- Let `p` be a prime ideal of `A`. If `P` is a prime ideal of `A[X]` maximal
