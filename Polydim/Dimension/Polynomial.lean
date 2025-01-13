@@ -1,5 +1,6 @@
 import Mathlib
 import Polydim.Dimension.Homomorphism
+import Polydim.GoingDown.GoingDown
 
 section
 
@@ -66,30 +67,36 @@ lemma Ideal.primeHeight_polynomial [IsNoetherianRing A] (p : Ideal A)
   -- use `IsLocalization.height_eq_of_disjoint`
   sorry
 
-lemma Ideal.exists_ideal_liesOver_polynomial_of_isPrime (p : Ideal A)
-    [p.IsPrime] : ∃ (P : Ideal A[X]), P.IsPrime ∧ P.LiesOver p :=
-  sorry
+lemma Ideal.exists_ideal_liesOver_polynomial_of_isPrime [Nontrivial A] (p : Ideal A)
+    [p.IsPrime] : ∃ (P : Ideal A[X]), P.IsPrime ∧ P.LiesOver p := by
+  letI := Polynomial.nontrivial_iff.mpr (by assumption)
+  letI : Module.Free A A[X] := Module.Free.of_basis <| Polynomial.basisMonomials A
+  letI := Module.FaithfullyFlat.instOfNontrivialOfFree A A[X]
+  obtain ⟨P, hP⟩ := PrimeSpectrum.comap_surjective_of_faithfullyFlat (B := A[X]) ⟨p, by assumption⟩
+  exact ⟨P.asIdeal, ⟨PrimeSpectrum.isPrime P, ⟨by rw [Ideal.under_def, ← PrimeSpectrum.comap_asIdeal, hP]⟩⟩⟩
 
 lemma le_ringKrullDim_polynomial [IsNoetherianRing A] :
     ringKrullDim A + 1 ≤ ringKrullDim A[X] := by
   nontriviality A
   obtain ⟨p, _, hp⟩ := Ideal.exists_isMaximal_height_eq_of_nontrivial (A := A)
-  rw [← hp]
-  obtain ⟨P, _, hP⟩ := Ideal.exists_ideal_liesOver_polynomial_of_isPrime p
-  have : ∃ Q : Ideal A[X], Q.IsMaximal ∧ P ≤ Q := sorry
-  obtain ⟨Q, _, hPQ⟩ := this
-  have : Q.LiesOver p := sorry
+  obtain ⟨P, _, hP⟩ := p.exists_ideal_liesOver_polynomial_of_isPrime
+  obtain ⟨Q, mQ, hPQ⟩ := P.exists_le_maximal <| Ideal.IsPrime.ne_top <| by simpa
+  have : Q.LiesOver p := ⟨Ideal.IsMaximal.eq_of_le (by assumption) Ideal.IsPrime.ne_top'
+    (hP.over ▸ fun x a ↦ hPQ a)⟩
   have : Q.primeHeight = p.primeHeight + 1 :=
     p.primeHeight_polynomial Q
-  sorry
+  rw [← hp, ← WithBot.coe_one, ← WithBot.coe_add, ← this]
+  exact (ringKrullDim_le_of_height_le (ringKrullDim A[X]) (A := A[X])).mp (by rfl) Q mQ.isPrime
 
 lemma ringKrullDim_polynomial_le [IsNoetherianRing A] :
     ringKrullDim A[X] ≤ ringKrullDim A + 1 := by
   nontriviality A[X]
+  have : Nontrivial A := Polynomial.nontrivial_iff.mp (by assumption)
   obtain ⟨P, _, hP⟩ := Ideal.exists_isMaximal_height_eq_of_nontrivial (A := A[X])
   let p : Ideal A := P.comap (algebraMap A A[X])
-  rw [← hP, Ideal.primeHeight_polynomial p P]
-  sorry
+  rw [← hP, Ideal.primeHeight_polynomial p P, WithBot.coe_add, WithBot.coe_one]
+  have := (ringKrullDim_le_of_height_le (ringKrullDim A) (A := A)).mp (by rfl) p (Ideal.IsPrime.under A P)
+  exact add_le_add_right this 1
 
 /-- `dim A[X] = dim A + 1` if `A` is Noetherian. -/
 theorem ringKrullDim_polynomial [IsNoetherianRing A] :
