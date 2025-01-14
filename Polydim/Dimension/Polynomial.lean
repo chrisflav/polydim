@@ -103,8 +103,10 @@ lemma Ismaximal.height_eq_one {R : Type*} [CommRing R] [IsDomain R] [IsPrincipal
     apply Order.zero_lt_height
     exact Ideal.bot_lt_of_maximal m h
 
-lemma ringKrullDim_eq_one {R : Type*} [CommRing R] [IsDomain R] [IsPrincipalIdealRing R] :
-    ringKrullDim R = 1 := sorry
+lemma ringKrull_eq_zero_iff {R : Type*} [CommRing R] : ringKrullDim R = 1 ↔ IsField R := sorry
+
+lemma ringKrullDim_eq_one {R : Type*} [CommRing R] [IsDomain R] [IsPrincipalIdealRing R]
+    (h : ¬ IsField R) : ringKrullDim R = 1 := sorry
 
 end
 
@@ -210,7 +212,8 @@ lemma Ideal.primeHeight_polynomial [IsNoetherianRing A] (p : Ideal A)
   have eq2 : P.primeHeight = P'.primeHeight := by
     rw [IsLocalization.height_eq_of_disjoint (Submonoid.map (algebraMap A A[X]) <| p.primeCompl) _ disj]
   rw [eq1, eq2]
-  apply Ideal.primeHeight_polynomial_of_isMaximal p' P'
+  sorry
+  --apply Ideal.primeHeight_polynomial_of_isMaximal p' P'
 
 lemma Ideal.exists_ideal_liesOver_polynomial_of_isPrime [Nontrivial A] (p : Ideal A)
     [p.IsPrime] : ∃ (P : Ideal A[X]), P.IsPrime ∧ P.LiesOver p := by
