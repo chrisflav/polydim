@@ -157,14 +157,6 @@ lemma ringKrullDim_le_of_height_le [Nontrivial A] (n : WithBot (WithTop ℕ)) :
         exact fun q hq ↦ WithBot.coe_le_coe.mpr <| le_iSup_of_le q <| le_iSup_of_le hq <| by rfl) this
     exact iSup_le_iff.mp (iSup_le_iff.mp this l) (by rfl)
 
-open Polynomial
-
-lemma poly_FDO_of_FDO [FiniteDimensionalOrder (PrimeSpectrum A)] :
-    FiniteDimensionalOrder (PrimeSpectrum A[X]) := by
-  #check Order.krullDim_eq_top_iff
-
-  sorry
-
 lemma Ideal.exists_isMaximal_height_eq_of_nontrivial [Nontrivial A] [FiniteDimensionalOrder (PrimeSpectrum A)] :
     ∃ (p : Ideal A), p.IsMaximal ∧ p.primeHeight = ringKrullDim A := by
   have := Order.krullDim_eq_length_of_finiteDimensionalOrder (α := (PrimeSpectrum A))
