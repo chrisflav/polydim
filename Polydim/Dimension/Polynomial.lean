@@ -226,8 +226,7 @@ lemma Ideal.primeHeight_polynomial [IsNoetherianRing A] (p : Ideal A)
   have eq2 : P.primeHeight = P'.primeHeight := by
     rw [IsLocalization.height_eq_of_disjoint (Submonoid.map (algebraMap A A[X]) <| p.primeCompl) _ disj]
   rw [eq1, eq2]
-  sorry
-  --apply Ideal.primeHeight_polynomial_of_isMaximal p' P'
+  apply Ideal.primeHeight_polynomial_of_isMaximal p' P'
 
 lemma Ideal.exists_ideal_liesOver_polynomial_of_isPrime [Nontrivial A] (p : Ideal A)
     [p.IsPrime] : ∃ (P : Ideal A[X]), P.IsPrime ∧ P.LiesOver p := by
@@ -247,24 +246,27 @@ lemma le_ringKrullDim_polynomial [IsNoetherianRing A] :
   have : Q.primeHeight = p.primeHeight + 1 :=
     p.primeHeight_polynomial Q
   rw [← hp, ← WithBot.coe_one, ← WithBot.coe_add, ← this]
-  exact (ringKrullDim_le_of_height_le (ringKrullDim A[X]) (A := A[X])).mp (by rfl) Q mQ.isPrime
-  have : ringKrullDim A[X] = ⊤ := by sorry
+  exact Q.primeHeight_le_ringKrullDim
+  have : ringKrullDim A[X] = ⊤ := by
+    have h1 := ringKrullDim_le_of_surjective (Polynomial.constantCoeff (R := A)) (fun a ↦ ⟨C a, by
+      unfold constantCoeff
+      simp only [RingHom.coe_mk, MonoidHom.coe_mk, OneHom.coe_mk, coeff_C_zero]⟩)
+    have h2 : ringKrullDim A = ⊤ := by
+      apply Order.krullDim_eq_top_iff.mpr
+      exact not_finiteDimensionalOrder_iff.mp h
+    exact eq_top_iff.mpr <| h2 ▸ h1
   rw [this]
   exact OrderTop.le_top _
 
 lemma ringKrullDim_polynomial_le [IsNoetherianRing A] :
     ringKrullDim A[X] ≤ ringKrullDim A + 1 := by
   nontriviality A[X]
-  have : Nontrivial A := Polynomial.nontrivial_iff.mp (by assumption)
-  by_cases h : FiniteDimensionalOrder (PrimeSpectrum A[X])
-  obtain ⟨P, _, hP⟩ := Ideal.exists_isMaximal_height_eq_of_nontrivial (A := A[X])
+  apply (ringKrullDim_le_of_isMaximal_height_le (ringKrullDim A + 1)).mpr
+  intro P hP
   let p : Ideal A := P.comap (algebraMap A A[X])
-  rw [← hP, Ideal.primeHeight_polynomial p P, WithBot.coe_add, WithBot.coe_one]
-  have := (ringKrullDim_le_of_height_le (ringKrullDim A) (A := A)).mp (by rfl) p (Ideal.IsPrime.under A P)
-  exact add_le_add_right this 1
-  have : ringKrullDim A = ⊤ := by sorry
-  rw [this]
-  exact StrictMono.maximal_preimage_top (fun _ _ a ↦ a) rfl _
+  rw [Ideal.primeHeight_polynomial p P, WithBot.coe_add, WithBot.coe_one]
+  exact add_le_add_right p.primeHeight_le_ringKrullDim 1
+
 
 /-- `dim A[X] = dim A + 1` if `A` is Noetherian. -/
 theorem ringKrullDim_polynomial [IsNoetherianRing A] :
