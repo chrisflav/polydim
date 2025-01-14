@@ -14,13 +14,13 @@ instance (p : Ideal A) [p.IsPrime] : IsNoetherianRing (Localization.AtPrime p) :
 going-down. -/
 lemma primeHeight_eq_primeHeight_add_of_liesOver_of_flat [Module.Flat A B] (p : Ideal A) [p.IsPrime]
     (P : Ideal B) [P.IsPrime] [P.LiesOver p] :
-    P.primeHeight = p.primeHeight +
-      (P.map (Ideal.Quotient.mk <| p.map (algebraMap A B))).primeHeight := by
+    P.primeHeight inferInstance = p.primeHeight inferInstance +
+      (P.map (Ideal.Quotient.mk <| p.map (algebraMap A B))).primeHeight inferInstance := by
   -- use `primeHeight_le_primeHeight_add_of_liesOver` for one direction
   -- and going down for the other one
   apply le_antisymm
   · apply primeHeight_le_primeHeight_add_of_liesOver
-  · wlog h : P.primeHeight ≠ ⊤
+  · wlog h : P.primeHeight inferInstance ≠ ⊤
     · simp only [ne_eq, Decidable.not_not] at h
       rw [h]
       simp
@@ -64,7 +64,6 @@ lemma primeHeight_eq_primeHeight_add_of_liesOver_of_flat [Module.Flat A B] (p : 
     have : l.length = lp'.length + l'.length := by simp [l]
     simp [l', hlp'len] at this
     rw [← Nat.cast_add, ← this]
-    rw [Ideal.primeHeight_eq_orderheight]
     apply Order.length_le_height
     simp [l, l', f, hlq]
     show _ ≤ P

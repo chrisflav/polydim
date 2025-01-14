@@ -6,8 +6,8 @@ variable {R : Type*} [CommRing R]
 spanned by `p.primeHeight` elements. -/
 lemma Ideal.exists_card_eq_primeHeight_of_isNoetherianRing [IsNoetherianRing R]
     (p : Ideal R) [p.IsPrime] :
-    ∃ (I : Ideal R) (s : Finset R), p ∈ I.minimalPrimes ∧ Ideal.span s = I ∧ s.card = p.primeHeight := by
-  obtain ⟨I, hI, hr⟩ := (p.height_le_iff_exists p.primeHeight).mp le_rfl
+    ∃ (I : Ideal R) (s : Finset R), p ∈ I.minimalPrimes ∧ Ideal.span s = I ∧ s.card = p.primeHeight inferInstance:= by
+  obtain ⟨I, hI, hr⟩ := (p.height_le_iff_exists <| p.primeHeight inferInstance).mp le_rfl
   obtain ⟨s, hs, hc⟩ := I.exists_finset_span_eq_of_fg (IsNoetherian.noetherian I)
   refine ⟨I, s, hI, hs, ?_⟩
   rw [hc]
@@ -15,7 +15,7 @@ lemma Ideal.exists_card_eq_primeHeight_of_isNoetherianRing [IsNoetherianRing R]
 
 lemma Ideal.primeHeight_ne_top_of_isNoetherianRing {R : Type*} [CommRing R]
     [IsNoetherianRing R] (p : Ideal R) [p.IsPrime] :
-    p.primeHeight ≠ ⊤ := by
+    p.primeHeight inferInstance ≠ ⊤ := by
   obtain ⟨I, s, _, _, hc⟩ := p.exists_card_eq_primeHeight_of_isNoetherianRing
   rw [← hc]
   simp
@@ -23,7 +23,7 @@ lemma Ideal.primeHeight_ne_top_of_isNoetherianRing {R : Type*} [CommRing R]
 lemma Ideal.primeHeight_le_of_mem_minimalPrimes' [IsNoetherianRing R]
     (p : Ideal R) [p.IsPrime] (I : Ideal R) (hI : p ∈ I.minimalPrimes)
     (s : Finset R) (hs : Ideal.span s = I) :
-    p.primeHeight ≤ s.card := by
+    p.primeHeight inferInstance ≤ s.card := by
   have : I.spanrank ≤ s.card := by
     simp only [Submodule.spanrank]
     let hsf' : { s : Set R // s.Finite ∧ Submodule.span R s = I} :=
@@ -51,18 +51,19 @@ lemma Ideal.map_quotient_mk_isPrime_of_isPrime {R : Type*} [CommRing R]
   exact Quotient.mk_surjective
   simpa
 
+instance (p : Ideal R) [p.IsPrime] (P : Ideal S) [P.IsPrime] [P.LiesOver p] :
+    (P.map (Ideal.Quotient.mk <| p.map (algebraMap R S))).IsPrime := by
+  apply Ideal.map_quotient_mk_isPrime_of_isPrime
+  rw [Ideal.map_le_iff_le_comap, Ideal.LiesOver.over (p := p) (P := P)]
+
 lemma primeHeight_le_primeHeight_add_of_liesOver [IsNoetherianRing R]
       [IsNoetherianRing S] (p : Ideal R) [p.IsPrime]
       (P : Ideal S) [P.IsPrime] [P.LiesOver p] :
-    P.primeHeight ≤ p.primeHeight +
-      (P.map (Ideal.Quotient.mk <| p.map (algebraMap R S))).primeHeight := by
+    P.primeHeight inferInstance ≤ (p.primeHeight inferInstance) +
+      (P.map (Ideal.Quotient.mk <| p.map (algebraMap R S))).primeHeight inferInstance := by
   classical
   obtain ⟨Ip, sp, hIp, hsp, hcp⟩ := Ideal.exists_card_eq_primeHeight_of_isNoetherianRing p
   set P' := P.map (Ideal.Quotient.mk <| p.map (algebraMap R S))
-  have : P'.IsPrime := by
-    apply Ideal.map_quotient_mk_isPrime_of_isPrime
-    rw [Ideal.map_le_iff_le_comap]
-    rw [Ideal.LiesOver.over (p := p) (P := P)]
   obtain ⟨IP', sP', hIP', hsP', hcP'⟩ := Ideal.exists_card_eq_primeHeight_of_isNoetherianRing P'
   -- horror starts
   have : ∀ x ∈ P', ∃ y ∈ P, Ideal.Quotient.mk _ y = x := by
@@ -115,7 +116,7 @@ lemma primeHeight_le_primeHeight_add_of_liesOver [IsNoetherianRing R]
     · apply add_le_add
       exact Finset.card_image_le
       exact hcardo
-  have : P.primeHeight ≤ t.card := by
+  have : P.primeHeight inferInstance ≤ t.card := by
     fapply Ideal.primeHeight_le_of_mem_minimalPrimes'
     · exact Ideal.span t
     · refine ⟨⟨inferInstance, ?_⟩, ?_⟩

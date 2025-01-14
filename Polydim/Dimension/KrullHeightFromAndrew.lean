@@ -25,13 +25,13 @@ end
 -- `ideal.height_le_iff_exists_minimal_primes` from Andrews repository.
 theorem Ideal.height_le_iff_exists [IsNoetherianRing R]
     (p : Ideal R) [p.IsPrime] (n : WithTop ℕ) :
-    p.primeHeight ≤ n ↔ ∃ (I : Ideal R), p ∈ I.minimalPrimes ∧ I.spanrank ≤ n :=
+    p.primeHeight inferInstance ≤ n ↔ ∃ (I : Ideal R), p ∈ I.minimalPrimes ∧ I.spanrank ≤ n :=
   sorry
 
 -- `ideal.height_le_spanrank_of_mem_minimal_primes` from Andrews repository.
 theorem Ideal.primeHeight_le_of_mem_minimalPrimes [IsNoetherianRing R] (p : Ideal R)
     [p.IsPrime] (I : Ideal R) (hI : p ∈ I.minimalPrimes) :
-    p.primeHeight ≤ I.spanrank := by
+    p.primeHeight inferInstance ≤ I.spanrank := by
   sorry
 
 end FromAndrewsRepo
