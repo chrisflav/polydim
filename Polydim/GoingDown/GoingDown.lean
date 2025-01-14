@@ -20,13 +20,14 @@ noncomputable instance [Module.Flat A B] (p : Ideal A) [p.IsPrime] (P : Ideal B)
     exact rfl
 
 instance [Module.Flat A B] (p : Ideal A) [p.IsPrime] (P : Ideal B) [P.IsPrime] [P.LiesOver p] :
-  Module.Flat (Localization.AtPrime p) (Localization.AtPrime P) := by sorry
+    Module.Flat (Localization.AtPrime p) (Localization.AtPrime P) := by
+  sorry
 
 /-- The going-down theorem for flat algebras. -/
 lemma exists_isPrime_and_liesOver_of_isPrime_of_le_of_liesOver [Module.Flat A B] (p' p : Ideal A)
     [p'.IsPrime] [p.IsPrime]
     (hle : p' ≤ p) (P : Ideal B) [P.IsPrime] [P.LiesOver p] :
-    ∃ (P' : Ideal B), P'.IsPrime ∧ P'.LiesOver p' := by
+    ∃ (P' : Ideal B), P' ≤ P ∧ P'.IsPrime ∧ P'.LiesOver p' := by
   have : IsLocalHom (algebraMap (Localization.AtPrime p) (Localization.AtPrime P)) := by
     rw [RingHom.algebraMap_toAlgebra]
     exact Localization.isLocalHom_localRingHom p P (algebraMap A B) Ideal.LiesOver.over
@@ -39,7 +40,8 @@ lemma exists_isPrime_and_liesOver_of_isPrime_of_le_of_liesOver [Module.Flat A B]
     obtain ⟨Pl, hpl⟩ := PrimeSpectrum.comap_surjective_of_faithfullyFlat (B := Localization.AtPrime P) ⟨pl', hp⟩
     exact ⟨Pl.asIdeal, ⟨PrimeSpectrum.isPrime Pl, ⟨by rw [Ideal.under_def, ← PrimeSpectrum.comap_asIdeal, hpl]⟩⟩⟩
   obtain ⟨Pl', hl, hlo⟩ := this
-  refine ⟨Ideal.comap (algebraMap B _) Pl', ?_, ?_⟩
+  refine ⟨Ideal.comap (algebraMap B _) Pl', ?_, ?_, ?_⟩
+  · exact (IsLocalization.AtPrime.orderIsoOfPrime _ P ⟨Pl', hl⟩).2.2
   · exact Ideal.IsPrime.under B Pl'
   · unfold pl' at hlo
     replace hlo := hlo.over
@@ -47,3 +49,38 @@ lemma exists_isPrime_and_liesOver_of_isPrime_of_le_of_liesOver [Module.Flat A B]
     rw [← Ideal.under_def, Ideal.under_under,
       ← Ideal.under_under (B := (Localization.AtPrime p)) Pl', ← hlo, Ideal.under_def,
       IsLocalization.comap_map_of_isPrime_disjoint _ _ p' (by simpa) disj]
+
+section
+
+def Algebra.HasGoingDown (R S : Type*) [CommRing R] [CommRing S] [Algebra R S] : Prop :=
+  ∀ (p q : Ideal R) [p.IsPrime] [q.IsPrime] (Q : Ideal S) [Q.IsPrime] [Q.LiesOver q],
+    p ≤ q → ∃ (P : Ideal S), P ≤ Q ∧ P.IsPrime ∧ P.LiesOver p
+
+variable (R S : Type*) [CommRing R] [CommRing S] [Algebra R S]
+
+lemma Algebra.HasGoingDown.exists_ideal_liesOver_lt (h : Algebra.HasGoingDown R S) (p q : Ideal R)
+    [p.IsPrime] [q.IsPrime] (Q : Ideal S) [Q.IsPrime] [Q.LiesOver q] (hpq : p < q):
+    ∃ (P : Ideal S), P < Q ∧ P.IsPrime ∧ P.LiesOver p := by
+  obtain ⟨P, hPQ, _, _⟩ := h p q Q hpq.le
+  have : P < Q := by
+    by_contra hc
+    have : P = Q := eq_of_le_of_not_lt hPQ hc
+    subst this
+    rw [Ideal.LiesOver.over (p := p) (P := P)] at hpq
+    rw [Ideal.LiesOver.over (p := q) (P := P)] at hpq
+    simp at hpq
+  use P, this
+
+lemma Algebra.HasGoingDown.exists_ltSeries (h : Algebra.HasGoingDown R S)
+    (l : LTSeries (PrimeSpectrum R)) (P : Ideal S) [P.IsPrime] [P.LiesOver l.last.asIdeal] :
+    ∃ (L : LTSeries (PrimeSpectrum S)),
+      L.length = l.length ∧
+      L.last = ⟨P, inferInstance⟩ ∧
+      ∀ i, (algebraMap R S).specComap (L i) = l i :=
+  sorry
+
+end
+
+lemma Algebra.HasGoingDown.of_flat [Module.Flat A B] : Algebra.HasGoingDown A B := by
+  introv p _ Q _ _ hpq
+  apply exists_isPrime_and_liesOver_of_isPrime_of_le_of_liesOver p q hpq Q

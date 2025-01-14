@@ -15,6 +15,12 @@ lemma Ideal.primeHeight_eq_orderheight (p : Ideal A) [hp : p.IsPrime] :
     Ideal.primeHeight p = Order.height (⟨p, hp⟩ : PrimeSpectrum A) := by
   sorry
 
+lemma Ideal.exists_series_of_primeHeight_ne_top (p : Ideal A) [p.IsPrime]
+    (hp : p.primeHeight ≠ ⊤) :
+    ∃ (l : LTSeries (PrimeSpectrum A)),
+      RelSeries.last l = ⟨p, inferInstance⟩ ∧ l.length = p.primeHeight :=
+  sorry
+
 -- TODO: remove this in favour of `IsLocalization.primeHeight_eq_ringKrullDim`
 /-- The height of a prime ideal `p` equals to the dimension of `A` localized away from `p`. -/
 lemma Ideal.primeHeight_eq_ringKrullDim (p : Ideal A) [p.IsPrime] :

@@ -13,6 +13,13 @@ lemma Ideal.exists_card_eq_primeHeight_of_isNoetherianRing [IsNoetherianRing R]
   rw [hc]
   exact le_antisymm hr <| p.primeHeight_le_of_mem_minimalPrimes I hI
 
+lemma Ideal.primeHeight_ne_top_of_isNoetherianRing {R : Type*} [CommRing R]
+    [IsNoetherianRing R] (p : Ideal R) [p.IsPrime] :
+    p.primeHeight ≠ ⊤ := by
+  obtain ⟨I, s, _, _, hc⟩ := p.exists_card_eq_primeHeight_of_isNoetherianRing
+  rw [← hc]
+  simp
+
 lemma Ideal.primeHeight_le_of_mem_minimalPrimes' [IsNoetherianRing R]
     (p : Ideal R) [p.IsPrime] (I : Ideal R) (hI : p ∈ I.minimalPrimes)
     (s : Finset R) (hs : Ideal.span s = I) :
