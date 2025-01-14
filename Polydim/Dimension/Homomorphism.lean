@@ -10,10 +10,6 @@ instance (p : Ideal A) [p.IsPrime] : IsNoetherianRing (Localization.AtPrime p) :
   apply IsLocalization.isNoetherianRing p.primeCompl
   infer_instance
 
-def RelSeries.cmap {α : Type*} {r : Rel α α} {β : Type*} {s : Rel β β} (p : RelSeries r)
-    (f : α → β) (hf : ∀ i : Fin p.length, s (f (p i.castSucc)) (f (p i.succ))) : RelSeries s :=
-  sorry
-
 /-- Matsumura 13.B Th. 19 (2). This holds more generally for any `A`-algebra `B` that satisfies
 going-down. -/
 lemma primeHeight_eq_primeHeight_add_of_liesOver_of_flat [Module.Flat A B] (p : Ideal A) [p.IsPrime]
@@ -45,27 +41,20 @@ lemma primeHeight_eq_primeHeight_add_of_liesOver_of_flat [Module.Flat A B] (p : 
         (Ideal.Quotient.mk <| p.map (algebraMap A B)) Ideal.Quotient.mk_surjective).strictMono hxy
     -- lift chain from the quotient
     let l' : LTSeries (PrimeSpectrum B) := lq.map f hf
-    have hlo : l'.head.asIdeal.LiesOver p := by
-      simp [l']
-      sorry
-    --have : (RelSeries.head lq).asIdeal.comap (Ideal.Quotient.mk (p.map (algebraMap A B))) =
-    --    (RelSeries.head lq).asIdeal :=
-    --  sorry
-    --have : RelSeries.head lq = p.map (algebraMap A B) := sorry
     have : l'.head.asIdeal.LiesOver lp.last.asIdeal := by
       simp [l', hlp]
       constructor
       rw [Ideal.under_def]
       apply le_antisymm
       · rw [← Ideal.map_le_iff_le_comap]
-        sorry
+        rw [← Ideal.map_le_iff_le_comap]
+        simp
       · conv_rhs => rw [Ideal.LiesOver.over (p := p) (P := P), Ideal.under_def]
-        have : (RelSeries.head lq).asIdeal ≤ (RelSeries.last lq).asIdeal := sorry
         apply Ideal.comap_mono
         apply le_trans
-        · apply Ideal.comap_mono this
+        · apply Ideal.comap_mono (lq.head_le_last)
         · rw [hlq]
-          simp
+          simp only [Ideal.comap_map_quotient_mk, sup_le_iff, le_refl, and_true]
           rw [Ideal.map_le_iff_le_comap]
           rw [Ideal.LiesOver.over (p := p) (P := P), Ideal.under_def]
     -- lifted via going-down using `hlo`
