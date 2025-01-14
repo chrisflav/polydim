@@ -92,7 +92,7 @@ lemma ringkrullDim_eq_zero_iff_isField {R : Type*} [CommRing R] [IsDomain R] :
 
 lemma IsMaximal.height_eq_one {R : Type*} [CommRing R] [IsDomain R] [IsPrincipalIdealRing R]
     (m : Ideal R) [hm : m.IsMaximal] (h : ¬ IsField R) :
-    m.primeHeight inferInstance = 1 := by
+    m.primeHeight = 1 := by
   unfold Ideal.primeHeight
   apply le_antisymm
   · by_contra! hlen
@@ -128,9 +128,9 @@ end
 among the prime ideals lying over `p`, `ht(P) = ht(p) + 1`. -/
 lemma Ideal.primeHeight_polynomial_of_isMaximal [IsNoetherianRing A] (p : Ideal A)
     [p.IsMaximal] (P : Ideal A[X]) [P.IsMaximal] [P.LiesOver p] :
-    P.primeHeight inferInstance = p.primeHeight inferInstance + 1 := by
+    P.primeHeight = p.primeHeight + 1 := by
   letI : Field (A ⧸ p) := Quotient.field p
-  have : (P.map (Ideal.Quotient.mk (Ideal.map (algebraMap A A[X]) p))).primeHeight inferInstance = 1 := by
+  have : (P.map (Ideal.Quotient.mk (Ideal.map (algebraMap A A[X]) p))).primeHeight = 1 := by
     let e : (A[X] ⧸ (Ideal.map C p)) ≃+* (A ⧸ p)[X] :=
       (Ideal.polynomialQuotientEquivQuotientPolynomial p).symm
     let P' : Ideal (A ⧸ p)[X] :=
@@ -145,7 +145,7 @@ lemma Ideal.primeHeight_polynomial_of_isMaximal [IsNoetherianRing A] (p : Ideal 
       rw [← this]
       exact map_comap_le
     letI : P'.IsMaximal := map_isMaximal_of_equiv e
-    have : P'.primeHeight inferInstance = 1 := IsMaximal.height_eq_one P' polynomial_not_isField
+    have : P'.primeHeight = 1 := IsMaximal.height_eq_one P' polynomial_not_isField
     simp only [P'] at this
     rwa [← height_eq_of_ringEquiv e <|
       P.map (Ideal.Quotient.mk <| p.map (algebraMap A A[X]))]
@@ -189,7 +189,7 @@ end
 among the prime ideals lying over `p`, `ht(P) = ht(p) + 1`. -/
 lemma Ideal.primeHeight_polynomial [IsNoetherianRing A] (p : Ideal A)
     [hp : p.IsPrime] (P : Ideal A[X]) [hP : P.IsMaximal] [plo : P.LiesOver p] :
-    P.primeHeight inferInstance = p.primeHeight inferInstance + 1 := by
+    P.primeHeight = p.primeHeight + 1 := by
   let Aₚ := Localization.AtPrime p
   have disj : Disjoint (Submonoid.map (algebraMap A A[X]) p.primeCompl : Set A[X]) P := by
     apply Set.disjoint_left.mpr
@@ -206,7 +206,7 @@ lemma Ideal.primeHeight_polynomial [IsNoetherianRing A] (p : Ideal A)
   letI : p'.IsMaximal := by
     have : p' = IsLocalRing.maximalIdeal Aₚ := Localization.AtPrime.map_eq_maximalIdeal
     exact this ▸ IsLocalRing.maximalIdeal.isMaximal Aₚ
-  have eq1 : p.primeHeight inferInstance = p'.primeHeight inferInstance := by
+  have eq1 : p.primeHeight = p'.primeHeight := by
     rw [IsLocalization.height_eq_of_disjoint p.primeCompl]
     exact Disjoint.symm <| Set.disjoint_left.mpr fun _ a b ↦ b a
   set P' : Ideal Aₚ[X] := P.map (algebraMap A[X] Aₚ[X])
@@ -223,7 +223,7 @@ lemma Ideal.primeHeight_polynomial [IsNoetherianRing A] (p : Ideal A)
     simp only [p', this]
     nth_rw 1 [Ideal.under_def]
     exact IsLocalization.map_comap p.primeCompl Aₚ (P'.under Aₚ)
-  have eq2 : P.primeHeight inferInstance = P'.primeHeight inferInstance := by
+  have eq2 : P.primeHeight = P'.primeHeight := by
     rw [IsLocalization.height_eq_of_disjoint (Submonoid.map (algebraMap A A[X]) <| p.primeCompl) _ disj]
   rw [eq1, eq2]
   apply Ideal.primeHeight_polynomial_of_isMaximal p' P'
@@ -243,7 +243,7 @@ lemma le_ringKrullDim_polynomial [IsNoetherianRing A] :
   obtain ⟨Q, mQ, hPQ⟩ := P.exists_le_maximal <| Ideal.IsPrime.ne_top <| by simpa
   have : Q.LiesOver p := ⟨Ideal.IsMaximal.eq_of_le (by assumption) Ideal.IsPrime.ne_top'
     (hP.over ▸ fun x a ↦ hPQ a)⟩
-  have : Q.primeHeight inferInstance = p.primeHeight inferInstance + 1 :=
+  have : Q.primeHeight = p.primeHeight + 1 :=
     p.primeHeight_polynomial Q
   rw [← hp, ← WithBot.coe_one, ← WithBot.coe_add, ← this]
   exact Q.primeHeight_le_ringKrullDim

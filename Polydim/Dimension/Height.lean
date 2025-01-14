@@ -4,7 +4,7 @@ variable {A B : Type*} [CommRing A] [CommRing B]
 
 /-- The height of a prime ideal in a ring is the supremum over the lengths of prime ideal
 chains ending at `p`. -/
-noncomputable def Ideal.primeHeight (p : Ideal A) (hp : p.IsPrime) : WithTop ℕ :=
+noncomputable def Ideal.primeHeight (p : Ideal A) [hp : p.IsPrime] : WithTop ℕ :=
   Order.height (⟨p, hp⟩ : PrimeSpectrum A)
 
 -- variable {α : Type u_1} {s : Set α} [Preorder α] (a : α)
@@ -17,9 +17,9 @@ noncomputable def Ideal.primeHeight (p : Ideal A) (hp : p.IsPrime) : WithTop ℕ
 --   sorry
 
 lemma Ideal.exists_series_of_primeHeight_ne_top (p : Ideal A) [pp : p.IsPrime]
-    (hp : p.primeHeight pp ≠ ⊤) :
+    (hp : p.primeHeight ≠ ⊤) :
     ∃ (l : LTSeries (PrimeSpectrum A)),
-      RelSeries.last l = ⟨p, inferInstance⟩ ∧ l.length = p.primeHeight pp := by
+      RelSeries.last l = ⟨p, inferInstance⟩ ∧ l.length = p.primeHeight := by
   obtain ⟨n, hn⟩ := Option.ne_none_iff_exists'.mp hp
   unfold Ideal.primeHeight at hp hn ⊢
   rw [hn]
@@ -116,12 +116,12 @@ theorem Order.hieght_eq_krullDim_le : Order.height a = Order.krullDim {b // b �
 end
 
 lemma Ideal.primeHeight_le_ringKrullDim {R : Type*} [CommRing R] (p : Ideal R) [hp : p.IsPrime] :
-    p.primeHeight hp ≤ ringKrullDim R := Order.height_le_krullDim _
+    p.primeHeight ≤ ringKrullDim R := Order.height_le_krullDim _
 
 /-- If `B = Aₚ`, `dim B = ht(p)`. -/
 lemma IsLocalization.primeHeight_eq_ringKrullDim (p : Ideal A) [hp : p.IsPrime]
     [Algebra A B] [IsLocalization.AtPrime B p] :
-    p.primeHeight hp = ringKrullDim B := by
+    p.primeHeight = ringKrullDim B := by
   unfold ringKrullDim Ideal.primeHeight
   rw [Order.krullDim_eq_of_orderIso (IsLocalization.AtPrime.orderIsoOfPrimeSpectrum _ p),
     ← Order.hieght_eq_krullDim_le (⟨p, hp⟩ : PrimeSpectrum A)]
@@ -129,7 +129,7 @@ lemma IsLocalization.primeHeight_eq_ringKrullDim (p : Ideal A) [hp : p.IsPrime]
 /-- `dim A ≤ n` if and only if the height of all prime ideals is less than `n`. -/
 lemma ringKrullDim_le_of_height_le [Nontrivial A] (n : WithBot (WithTop ℕ)) :
   ringKrullDim A ≤ n ↔
-    ∀ (p : Ideal A), (hp : p.IsPrime) → p.primeHeight hp ≤ n := by
+    ∀ (p : Ideal A), (hp : p.IsPrime) → p.primeHeight ≤ n := by
   constructor
   · intro h p hp
     exact Preorder.le_trans _ _ n (Order.height_le_krullDim (⟨p, hp⟩ : PrimeSpectrum A)) h
@@ -145,7 +145,7 @@ lemma ringKrullDim_le_of_height_le [Nontrivial A] (n : WithBot (WithTop ℕ)) :
 
 lemma ringKrullDim_le_of_isMaximal_height_le [Nontrivial A] (n : WithBot (WithTop ℕ)) :
     ringKrullDim A ≤ n ↔
-    ∀ (m : Ideal A), (hm : m.IsMaximal) → m.primeHeight hm.isPrime ≤ n := by
+    ∀ (m : Ideal A), (hm : m.IsMaximal) → m.primeHeight ≤ n := by
   constructor
   all_goals intro h
   · intro m hm
@@ -153,13 +153,13 @@ lemma ringKrullDim_le_of_isMaximal_height_le [Nontrivial A] (n : WithBot (WithTo
   · rw [ringKrullDim_le_of_height_le n]
     intro p hp
     have ⟨m, hmax, hle⟩ := Ideal.exists_le_maximal p hp.ne_top
-    apply le_trans (b := (m.primeHeight hmax.isPrime : WithBot (WithTop ℕ)))
+    apply le_trans (b := (m.primeHeight : WithBot (WithTop ℕ)))
     · rw [WithBot.coe_le_coe]
       exact Order.height_mono hle
     · exact h m hmax
 
 lemma Ideal.exists_isMaximal_height_eq_of_nontrivial [Nontrivial A] [FiniteDimensionalOrder (PrimeSpectrum A)] :
-    ∃ (p : Ideal A) (hp : p.IsMaximal), p.primeHeight hp.isPrime = ringKrullDim A := by
+    ∃ (p : Ideal A) (_ : p.IsMaximal), p.primeHeight = ringKrullDim A := by
   have := Order.krullDim_eq_length_of_finiteDimensionalOrder (α := (PrimeSpectrum A))
   unfold ringKrullDim
   rw [Order.krullDim_eq_length_of_finiteDimensionalOrder]
@@ -181,7 +181,7 @@ lemma Ideal.exists_isMaximal_height_eq_of_nontrivial [Nontrivial A] [FiniteDimen
   exact False.elim (Nat.not_succ_le_self _ le)
 
 lemma height_eq_of_ringEquiv (e : A ≃+* B) (p : Ideal A) [hp : p.IsPrime] :
-    (p.map e).primeHeight (Ideal.map_isPrime_of_equiv e) = p.primeHeight hp := by
+    (p.map e).primeHeight = p.primeHeight := by
   set g := PrimeSpectrum.comapEquiv e
   have eq : Ideal.map e p = Ideal.comap e.symm p := Ideal.map_comap_of_equiv e
   set f : PrimeSpectrum A ≃o PrimeSpectrum B := { g with
@@ -201,7 +201,7 @@ lemma height_eq_of_ringEquiv (e : A ≃+* B) (p : Ideal A) [hp : p.IsPrime] :
 
 lemma IsLocalization.height_eq_of_disjoint [Algebra A B] (M : Submonoid A)
     [IsLocalization M B] (p : Ideal A) [hp : p.IsPrime] (h : Disjoint (M : Set A) (p : Set A)) :
-    (p.map <| algebraMap A B).primeHeight (isPrime_of_isPrime_disjoint M B p hp h) = p.primeHeight hp := by
+    (p.map <| algebraMap A B).primeHeight (hp := isPrime_of_isPrime_disjoint M B p hp h) = p.primeHeight := by
   letI := IsLocalization.isPrime_of_isPrime_disjoint M B p hp h
   set P := p.map (algebraMap A B)
   letI := IsLocalization.isLocalization_isLocalization_atPrime_isLocalization (M := M) (Localization.AtPrime P) P
