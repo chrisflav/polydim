@@ -58,13 +58,13 @@ end
 lemma Ideal.primeHeight_polynomial_of_isMaximal [IsNoetherianRing A] (p : Ideal A)
     [p.IsMaximal] (P : Ideal A[X]) [P.IsMaximal] [P.LiesOver p] :
     P.primeHeight = p.primeHeight + 1 := by
+  letI : Field (A ⧸ p) := Quotient.field p
   have : (P.map (Ideal.Quotient.mk (Ideal.map (algebraMap A A[X]) p))).primeHeight = 1 := by
-    let e : (A[X] ⧸ Ideal.map (algebraMap A A[X]) p) ≃+* (A ⧸ p)[X] :=
-      polynomialQuotient p
+    let e : (A[X] ⧸ (Ideal.map C p)) ≃+* (A ⧸ p)[X] :=
+      (Ideal.polynomialQuotientEquivQuotientPolynomial p).symm
     let P' : Ideal (A ⧸ p)[X] :=
       Ideal.map e <| Ideal.map (Ideal.Quotient.mk <| Ideal.map (algebraMap A A[X]) p) P
     -- use that `P'` is a maximal ideal of `(A ⧸ p)[X]`
-
     have : (P.map (Ideal.Quotient.mk <| map (algebraMap A A[X]) p)).IsMaximal := by
       apply Ideal.map_isMaximal_of_surjective
       · exact Quotient.mk_surjective
@@ -73,9 +73,8 @@ lemma Ideal.primeHeight_polynomial_of_isMaximal [IsNoetherianRing A] (p : Ideal 
         exact Eq.symm LiesOver.over
       rw [← this]
       exact map_comap_le
-    have : P'.IsMaximal := map_isMaximal_of_equiv e
-    have : P'.primeHeight = 1 := by
-      sorry
+    letI : P'.IsMaximal := map_isMaximal_of_equiv e
+    have : P'.primeHeight = 1 := Ismaximal.height_eq_one
     simp only [P'] at this
     rwa [← height_eq_of_ringEquiv e <|
       P.map (Ideal.Quotient.mk <| p.map (algebraMap A A[X]))]
