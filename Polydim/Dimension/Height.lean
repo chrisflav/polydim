@@ -123,7 +123,10 @@ theorem Order.hieght_eq_krullDim_le : Order.height a = Order.krullDim {b // b �
 
 end
 
-
+lemma Ideal.primeHeight_le_ringKrullDim {R : Type*} [CommRing R] (p : Ideal R) [p.IsPrime] :
+    p.primeHeight ≤ ringKrullDim R := by
+  rw [Ideal.primeHeight_eq_orderheight]
+  exact Order.height_le_krullDim _
 
 /-- If `B = Aₚ`, `dim B = ht(p)`. -/
 lemma IsLocalization.primeHeight_eq_ringKrullDim (p : Ideal A) [hp : p.IsPrime]
@@ -156,6 +159,21 @@ lemma ringKrullDim_le_of_height_le [Nontrivial A] (n : WithBot (WithTop ℕ)) :
         simp only [iSup_le_iff]
         exact fun q hq ↦ WithBot.coe_le_coe.mpr <| le_iSup_of_le q <| le_iSup_of_le hq <| by rfl) this
     exact iSup_le_iff.mp (iSup_le_iff.mp this l) (by rfl)
+
+lemma ringKrullDim_le_of_isMaximal_height_le [Nontrivial A] (n : WithBot (WithTop ℕ)) :
+    ringKrullDim A ≤ n ↔
+    ∀ (m : Ideal A), m.IsMaximal → m.primeHeight ≤ n := by
+  constructor
+  all_goals intro h
+  · intro m hm
+    exact (ringKrullDim_le_of_height_le n).mp h m hm.isPrime
+  · rw [ringKrullDim_le_of_height_le n]
+    intro p hp
+    have ⟨m, hmax, hle⟩ := Ideal.exists_le_maximal p hp.ne_top
+    apply le_trans (b := (m.primeHeight : WithBot (WithTop ℕ)))
+    · rw [WithBot.coe_le_coe, Ideal.primeHeight_eq_orderheight, Ideal.primeHeight_eq_orderheight]
+      exact Order.height_mono hle
+    · exact h m hmax
 
 lemma Ideal.exists_isMaximal_height_eq_of_nontrivial [Nontrivial A] [FiniteDimensionalOrder (PrimeSpectrum A)] :
     ∃ (p : Ideal A), p.IsMaximal ∧ p.primeHeight = ringKrullDim A := by

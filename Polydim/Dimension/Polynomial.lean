@@ -50,10 +50,6 @@ lemma Order.zero_lt_height [OrderBot α] (h : ⊥ < x) : 0 < Order.height x := b
   · rw [Order.height_bot]
     exact ENat.top_pos
 
-lemma Order.zero_lt_height_iff : 0 < Order.height x ↔ ∃ y, y < x := by
-  rw [← not_iff_not, not_lt, nonpos_iff_eq_zero, height_eq_zero, not_exists,
-    isMin_iff_forall_not_lt]
-
 lemma Order.one_lt_height_iff : 1 < Order.height x ↔ ∃ y z, z < y ∧ y < x := by
   rw [← not_iff_not, not_lt, Order.height_le_iff']
   constructor
@@ -81,8 +77,21 @@ end
 
 section
 
-lemma Ismaximal.height_eq_one {R : Type*} [CommRing R] [IsDomain R] [IsPrincipalIdealRing R]
-    {m : Ideal R} [hm : m.IsMaximal] (h : ¬ IsField R) :
+lemma ringkrullDim_eq_zero_iff_isField {R : Type*} [CommRing R] [IsDomain R] :
+    ringKrullDim R = 0 ↔ IsField R := by
+  constructor
+  all_goals intro h
+  · contrapose! h
+    suffices hlt : 0 < ringKrullDim R
+    · exact Ne.symm (ne_of_lt hlt)
+    · rw [ringKrullDim, Order.krullDim_pos_iff]
+      rcases Ideal.exists_maximal (α := R) with ⟨m, hm⟩
+      use ⟨⊥, Ideal.bot_prime⟩ , ⟨m, hm.isPrime⟩
+      exact Ideal.bot_lt_of_maximal m h
+  · exact ringKrullDim_eq_zero_of_isField h
+
+lemma IsMaximal.height_eq_one {R : Type*} [CommRing R] [IsDomain R] [IsPrincipalIdealRing R]
+    (m : Ideal R) [hm : m.IsMaximal] (h : ¬ IsField R) :
     m.primeHeight = 1 := by
   rw [Ideal.primeHeight_eq_orderheight]
   apply le_antisymm
@@ -103,10 +112,15 @@ lemma Ismaximal.height_eq_one {R : Type*} [CommRing R] [IsDomain R] [IsPrincipal
     apply Order.zero_lt_height
     exact Ideal.bot_lt_of_maximal m h
 
-lemma ringKrull_eq_zero_iff {R : Type*} [CommRing R] : ringKrullDim R = 1 ↔ IsField R := sorry
-
 lemma ringKrullDim_eq_one {R : Type*} [CommRing R] [IsDomain R] [IsPrincipalIdealRing R]
-    (h : ¬ IsField R) : ringKrullDim R = 1 := sorry
+    (h : ¬ IsField R) : ringKrullDim R = 1 := by
+  apply le_antisymm
+  · rw [ringKrullDim_le_of_isMaximal_height_le]
+    intro m hm
+    exact le_of_eq (congrArg WithBot.some <| IsMaximal.height_eq_one m h)
+  · contrapose! h
+    rw [← ringkrullDim_eq_zero_iff_isField]
+    apply le_antisymm (Order.le_of_lt_succ h) ringKrullDim_nonneg_of_nontrivial
 
 end
 
@@ -131,7 +145,7 @@ lemma Ideal.primeHeight_polynomial_of_isMaximal [IsNoetherianRing A] (p : Ideal 
       rw [← this]
       exact map_comap_le
     letI : P'.IsMaximal := map_isMaximal_of_equiv e
-    have : P'.primeHeight = 1 := Ismaximal.height_eq_one polynomial_not_isField
+    have : P'.primeHeight = 1 := IsMaximal.height_eq_one P' polynomial_not_isField
     simp only [P'] at this
     rwa [← height_eq_of_ringEquiv e <|
       P.map (Ideal.Quotient.mk <| p.map (algebraMap A A[X]))]
