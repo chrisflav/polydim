@@ -126,10 +126,16 @@ end
 
 
 /-- If `B = Aₚ`, `dim B = ht(p)`. -/
-lemma IsLocalization.primeHeight_eq_ringKrullDim (p : Ideal A) [p.IsPrime]
+lemma IsLocalization.primeHeight_eq_ringKrullDim (p : Ideal A) [hp : p.IsPrime]
     [Algebra A B] [IsLocalization.AtPrime B p] :
-    p.primeHeight = ringKrullDim B :=
-  sorry
+    p.primeHeight = ringKrullDim B := by
+  unfold ringKrullDim
+  rw [Order.krullDim_eq_of_orderIso (IsLocalization.AtPrime.orderIsoOfPrimeSpectrum _ p),
+    ← Order.hieght_eq_krullDim_le (⟨p, hp⟩ : PrimeSpectrum A),
+    Ideal.primeHeight_eq_orderheight ]
+
+
+
 
 -- TODO
 /-- `dim A ≤ n` if and only if the height of all prime ideals is less than `n`. -/
