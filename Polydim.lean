@@ -1,6 +1,8 @@
 import Polydim.Basic
 import Polydim.Dimension.Height
 import Polydim.Dimension.Homomorphism
+import Polydim.Dimension.KrullHeightFromAndrew
+import Polydim.Dimension.NoetherianLocal
 import Polydim.Dimension.Polynomial
 import Polydim.GoingDown.FaithfullyFlat
 import Polydim.GoingDown.FaithfullyFlat2
