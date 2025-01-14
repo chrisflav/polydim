@@ -21,7 +21,8 @@ noncomputable instance [Module.Flat A B] (p : Ideal A) [p.IsPrime] (P : Ideal B)
 
 instance [Module.Flat A B] (p : Ideal A) [p.IsPrime] (P : Ideal B) [P.IsPrime] [P.LiesOver p] :
     Module.Flat (Localization.AtPrime p) (Localization.AtPrime P) := by
-  sorry
+  rw [Module.flat_iff_of_isLocalization (S := (Localization.AtPrime p)) (p := p.primeCompl)]
+  exact Module.Flat.trans A B (Localization.AtPrime P)
 
 /-- The going-down theorem for flat algebras. -/
 lemma exists_isPrime_and_liesOver_of_isPrime_of_le_of_liesOver [Module.Flat A B] (p' p : Ideal A)
