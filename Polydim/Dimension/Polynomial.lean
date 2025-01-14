@@ -10,12 +10,51 @@ open Polynomial
 instance : Module.Free A A[X] := Module.Free.of_basis <| Polynomial.basisMonomials A
 
 /-- `(A ⧸ I)[X]` is isomorphic to `A[X] / I`. -/
-def polynomialQuotient (I : Ideal A) :
+noncomputable def polynomialQuotient (I : Ideal A) :
     (A[X] ⧸ (I.map <| algebraMap A A[X])) ≃ₐ[A] (A ⧸ I)[X] :=
-  sorry
+  AlgEquiv.ofRingEquiv (f := (Ideal.polynomialQuotientEquivQuotientPolynomial I).symm)
+  (by
+    intro x
+    dsimp only [algebraMap_eq, Polynomial.algebraMap_apply, Ideal.Quotient.algebraMap_eq]
+    have : algebraMap A (A[X] ⧸ Ideal.map C I) =
+        (algebraMap A[X] (A[X] ⧸ Ideal.map C I)).comp (algebraMap A A[X]) := by
+      rfl
+    rw [this]
+    rw [Ideal.Quotient.algebraMap_eq, algebraMap_eq, RingHom.coe_comp, Function.comp_apply,
+      Ideal.polynomialQuotientEquivQuotientPolynomial_symm_mk, map_C]
+  )
 
 /-- Let `p` be a prime ideal of `A`. If `P` is a prime ideal of `A[X]` maximal
 among the prime ideals lying over `p`, `ht(P) = ht(p) + 1`. -/
+
+section
+
+lemma Ideal.map_isMaximal_of_surjective {R S F : Type*} [Ring R] [Ring S] [FunLike F R S]
+    [rc : RingHomClass F R S] {f : F}
+    (hf : Function.Surjective ⇑f) {I : Ideal R} [H : I.IsMaximal]
+    (hk : RingHom.ker f ≤ I) : (Ideal.map f I).IsMaximal := by
+  have := Ideal.map_eq_top_or_isMaximal_of_surjective f hf H
+  rw [or_iff_not_imp_left] at this
+  apply this
+  by_contra h
+  replace h := congr_arg (comap f) h
+  rw [comap_map_of_surjective _ hf, comap_top] at h
+  have := eq_top_iff.mpr <| h ▸ sup_le (le_of_eq rfl) hk
+  exact H.ne_top this
+
+end
+
+section
+
+lemma Ismaximal.height_eq_one {R : Type*} [CommRing R] [IsDomain R] [IsPrincipalIdealRing R]
+    {m : Ideal R} [hm : m.IsMaximal] :
+  m.primeHeight = 1 := sorry
+
+lemma ringKrullDim_eq_one {R : Type*} [CommRing R] [IsDomain R] [IsPrincipalIdealRing R] :
+    ringKrullDim R = 1 := sorry
+
+end
+
 lemma Ideal.primeHeight_polynomial_of_isMaximal [IsNoetherianRing A] (p : Ideal A)
     [p.IsMaximal] (P : Ideal A[X]) [P.IsMaximal] [P.LiesOver p] :
     P.primeHeight = p.primeHeight + 1 := by
@@ -23,15 +62,24 @@ lemma Ideal.primeHeight_polynomial_of_isMaximal [IsNoetherianRing A] (p : Ideal 
     let e : (A[X] ⧸ Ideal.map (algebraMap A A[X]) p) ≃+* (A ⧸ p)[X] :=
       polynomialQuotient p
     let P' : Ideal (A ⧸ p)[X] :=
-      Ideal.map e <| Ideal.map (algebraMap A[X] <| A[X] ⧸ Ideal.map (algebraMap A A[X]) p) P
+      Ideal.map e <| Ideal.map (Ideal.Quotient.mk <| Ideal.map (algebraMap A A[X]) p) P
     -- use that `P'` is a maximal ideal of `(A ⧸ p)[X]`
-    have : P'.primeHeight = 1 :=
-      sorry
-    have : (P.map (Ideal.Quotient.mk <| map (algebraMap A A[X]) p)).IsPrime :=
+
+    have : (P.map (Ideal.Quotient.mk <| map (algebraMap A A[X]) p)).IsMaximal := by
+      apply Ideal.map_isMaximal_of_surjective
+      · exact Quotient.mk_surjective
+      rw [mk_ker]
+      have : Ideal.comap (algebraMap A A[X]) P = p := by
+        exact Eq.symm LiesOver.over
+      rw [← this]
+      exact map_comap_le
+    have : P'.IsMaximal := map_isMaximal_of_equiv e
+    have : P'.primeHeight = 1 := by
       sorry
     simp only [P'] at this
     rwa [← height_eq_of_ringEquiv e <|
       P.map (Ideal.Quotient.mk <| p.map (algebraMap A A[X]))]
+
   rw [primeHeight_eq_primeHeight_add_of_liesOver_of_flat p, this]
 
 /-- Let `p` be a prime ideal of `A`. If `P` is a prime ideal of `A[X]` maximal
