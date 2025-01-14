@@ -161,6 +161,28 @@ lemma Ideal.exists_isMaximal_height_eq_of_nontrivial [Nontrivial A] :
     ∃ (p : Ideal A), p.IsMaximal ∧ p.primeHeight = ringKrullDim A :=
   sorry
 
+lemma Ideal.exists_isMaximal_height_eq_of_nontrivial' [Nontrivial A] [FiniteDimensionalOrder (PrimeSpectrum A)] :
+    ∃ (p : Ideal A), p.IsMaximal ∧ p.primeHeight = ringKrullDim A := by
+  have := Order.krullDim_eq_length_of_finiteDimensionalOrder (α := (PrimeSpectrum A))
+  unfold ringKrullDim
+  rw [Order.krullDim_eq_length_of_finiteDimensionalOrder]
+  set l := LTSeries.longestOf (PrimeSpectrum A)
+  use l.last.asIdeal
+  constructor
+  · obtain ⟨m, maxm, hm⟩ := Ideal.exists_le_maximal l.last.asIdeal IsPrime.ne_top'
+    by_cases h : l.last.asIdeal = m
+    · exact h ▸ maxm
+    have eq := RelSeries.snoc_length l ⟨m, maxm.isPrime⟩ (lt_of_le_of_ne hm <| ne_of_apply_ne _ h)
+    have le := LTSeries.longestOf_is_longest <| RelSeries.snoc l ⟨m, maxm.isPrime⟩ (lt_of_le_of_ne hm <| ne_of_apply_ne _ h)
+    rw [eq] at le
+    exact False.elim (Nat.not_succ_le_self _ le)
+  rw [Ideal.primeHeight_eq_orderheight, Order.height]
+  apply WithBot.coe_eq_coe.mpr
+  apply le_antisymm
+  · simp only [iSup_le_iff, Nat.cast_le]
+    exact fun q hq ↦ LTSeries.longestOf_is_longest q
+  exact le_iSup_iff.mpr <| fun _ h ↦ iSup_le_iff.mp (h l) (by rfl)
+
 lemma height_eq_of_ringEquiv (e : A ≃+* B) (p : Ideal A) [hp : p.IsPrime] :
     (p.map e).primeHeight = p.primeHeight := by
   repeat rw [Ideal.primeHeight_eq_orderheight]
@@ -181,6 +203,14 @@ lemma height_eq_of_ringEquiv (e : A ≃+* B) (p : Ideal A) [hp : p.IsPrime] :
   congr
 
 lemma IsLocalization.height_eq_of_disjoint [Algebra A B] (M : Submonoid A)
-    [IsLocalization M B] (p : Ideal A) [p.IsPrime] (h : Disjoint (M : Set A) (p : Set A)) :
-    (p.map <| algebraMap A B).primeHeight = p.primeHeight :=
-  sorry
+    [IsLocalization M B] (p : Ideal A) [hp : p.IsPrime] (h : Disjoint (M : Set A) (p : Set A)) :
+    (p.map <| algebraMap A B).primeHeight = p.primeHeight := by
+  letI := IsLocalization.isPrime_of_isPrime_disjoint M B p hp h
+  set P := p.map (algebraMap A B)
+  letI := IsLocalization.isLocalization_isLocalization_atPrime_isLocalization (M := M) (Localization.AtPrime P) P
+  have eq := comap_map_of_isPrime_disjoint M B p hp h
+  simp only [eq] at this
+  have := ringKrullDim_eq_of_ringEquiv (IsLocalization.algEquiv p.primeCompl
+    (Localization.AtPrime P) (Localization.AtPrime p)).toRingEquiv
+  rw [← IsLocalization.primeHeight_eq_ringKrullDim P, ← IsLocalization.primeHeight_eq_ringKrullDim p] at this
+  exact WithBot.coe_eq_coe.mp this
