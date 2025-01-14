@@ -24,9 +24,6 @@ noncomputable def polynomialQuotient (I : Ideal A) :
       Ideal.polynomialQuotientEquivQuotientPolynomial_symm_mk, map_C]
   )
 
-/-- Let `p` be a prime ideal of `A`. If `P` is a prime ideal of `A[X]` maximal
-among the prime ideals lying over `p`, `ht(P) = ht(p) + 1`. -/
-
 section
 
 lemma Ideal.map_isMaximal_of_surjective {R S F : Type*} [Ring R] [Ring S] [FunLike F R S]
@@ -55,6 +52,8 @@ lemma ringKrullDim_eq_one {R : Type*} [CommRing R] [IsDomain R] [IsPrincipalIdea
 
 end
 
+/-- Let `p` be a prime ideal of `A`. If `P` is a prime ideal of `A[X]` maximal
+among the prime ideals lying over `p`, `ht(P) = ht(p) + 1`. -/
 lemma Ideal.primeHeight_polynomial_of_isMaximal [IsNoetherianRing A] (p : Ideal A)
     [p.IsMaximal] (P : Ideal A[X]) [P.IsMaximal] [P.LiesOver p] :
     P.primeHeight = p.primeHeight + 1 := by
@@ -81,15 +80,74 @@ lemma Ideal.primeHeight_polynomial_of_isMaximal [IsNoetherianRing A] (p : Ideal 
 
   rw [primeHeight_eq_primeHeight_add_of_liesOver_of_flat p, this]
 
+lemma IsLocalization.IsMaximal_of_IsMaximal_disjoint {R : Type*} [CommSemiring R] (M : Submonoid R)
+    (S : Type*) [CommSemiring S] [Algebra R S] [IsLocalization M S] (J : Ideal S)
+    (h : (Ideal.comap (algebraMap R S) J).IsMaximal) (disj : Disjoint (M : Set R) (Ideal.comap (algebraMap R S) J)) :
+    J.IsMaximal := by
+  obtain ⟨m, maxm, hm⟩ := Ideal.exists_le_maximal J <| Ideal.IsPrime.ne_top <|
+    (IsLocalization.isPrime_iff_isPrime_disjoint M S J).mpr ⟨h.isPrime, disj⟩
+  have : (Ideal.comap (algebraMap R S) J) ≤ (Ideal.comap (algebraMap R S) m) := fun x h ↦ by
+    rw [Ideal.mem_comap] at h ⊢
+    exact (hm h)
+  have := Ideal.IsMaximal.eq_of_le h (Ideal.IsPrime.ne_top <| Ideal.IsPrime.under R m) this
+  have : J = m := by rw [← IsLocalization.map_comap M S J, ← IsLocalization.map_comap M S m, this]
+  exact this ▸ maxm
+
+section
+
+variable (S : Submonoid A) (Aₚ : Type*) [CommRing Aₚ] [Algebra A Aₚ] [IsLocalization S Aₚ]
+
+noncomputable instance : Algebra A[X] Aₚ[X] :=
+  RingHom.toAlgebra (Polynomial.mapRingHom (algebraMap A Aₚ))
+
+noncomputable instance : IsScalarTower A A[X] Aₚ[X] := by sorry
+
+noncomputable instance : IsLocalization (Submonoid.map (algebraMap A A[X]) <| S) Aₚ[X] := by sorry
+
+end
+
 /-- Let `p` be a prime ideal of `A`. If `P` is a prime ideal of `A[X]` maximal
 among the prime ideals lying over `p`, `ht(P) = ht(p) + 1`. -/
 lemma Ideal.primeHeight_polynomial [IsNoetherianRing A] (p : Ideal A)
-    [p.IsPrime] (P : Ideal A[X]) [P.IsMaximal] [P.LiesOver p] :
+    [hp : p.IsPrime] (P : Ideal A[X]) [hP : P.IsMaximal] [plo : P.LiesOver p] :
     P.primeHeight = p.primeHeight + 1 := by
   let Aₚ := Localization.AtPrime p
-  let Bₚ := Localization (Submonoid.map (algebraMap A A[X]) <| p.primeCompl)
-  -- use `IsLocalization.height_eq_of_disjoint`
-  sorry
+  have disj : Disjoint (Submonoid.map (algebraMap A A[X]) p.primeCompl : Set A[X]) P := by
+    apply Set.disjoint_left.mpr
+    intro a ha1 ha2
+    simp only [algebraMap_eq, Submonoid.coe_map, Set.mem_image, SetLike.mem_coe] at ha1
+    obtain ⟨b, hb⟩ := ha1
+    have : b ∈ p := by
+      rw [plo.over, mem_comap, algebraMap_eq]
+      exact hb.2 ▸ ha2
+    exact hb.1 this
+  have eq : (comap (algebraMap A[X] Aₚ[X]) (map (algebraMap A[X] Aₚ[X]) P)) = P :=
+      IsLocalization.comap_map_of_isPrime_disjoint _ _ P hP.isPrime disj
+  set p' := p.map (algebraMap A Aₚ)
+  letI : p'.IsMaximal := by
+    have : p' = IsLocalRing.maximalIdeal Aₚ := Localization.AtPrime.map_eq_maximalIdeal
+    exact this ▸ IsLocalRing.maximalIdeal.isMaximal Aₚ
+  have eq1 : p.primeHeight = p'.primeHeight := by
+    rw [IsLocalization.height_eq_of_disjoint p.primeCompl]
+    exact Disjoint.symm <| Set.disjoint_left.mpr fun _ a b ↦ b a
+  set P' : Ideal Aₚ[X] := P.map (algebraMap A[X] Aₚ[X])
+  have mp : P'.IsMaximal :=
+    IsLocalization.IsMaximal_of_IsMaximal_disjoint _ _ _ (eq.symm ▸ hP) (eq.symm ▸ disj)
+  have lo : P'.LiesOver p' := by
+    constructor
+    have h1 : p'.under A = p := IsLocalization.comap_map_of_isPrime_disjoint p.primeCompl
+        _ p hp <| Disjoint.symm <| Set.disjoint_left.mpr fun _ a b ↦ b a
+    have h2 : P'.under A[X] = P := IsLocalization.comap_map_of_isPrime_disjoint
+      (Submonoid.map (algebraMap A A[X]) <| p.primeCompl) Aₚ[X] P hP.isPrime disj
+    have := plo.over
+    rw [← h2, Ideal.under_under, ← Ideal.under_under P' (B := Aₚ)] at this
+    simp only [p', this]
+    nth_rw 1 [Ideal.under_def]
+    exact IsLocalization.map_comap p.primeCompl Aₚ (P'.under Aₚ)
+  have eq2 : P.primeHeight = P'.primeHeight := by
+    rw [IsLocalization.height_eq_of_disjoint (Submonoid.map (algebraMap A A[X]) <| p.primeCompl) _ disj]
+  rw [eq1, eq2]
+  apply Ideal.primeHeight_polynomial_of_isMaximal p' P'
 
 lemma Ideal.exists_ideal_liesOver_polynomial_of_isPrime [Nontrivial A] (p : Ideal A)
     [p.IsPrime] : ∃ (P : Ideal A[X]), P.IsPrime ∧ P.LiesOver p := by
