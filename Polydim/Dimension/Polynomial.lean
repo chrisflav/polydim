@@ -100,9 +100,16 @@ variable (S : Submonoid A) (Aₚ : Type*) [CommRing Aₚ] [Algebra A Aₚ] [IsLo
 noncomputable instance : Algebra A[X] Aₚ[X] :=
   RingHom.toAlgebra (Polynomial.mapRingHom (algebraMap A Aₚ))
 
-noncomputable instance : IsScalarTower A A[X] Aₚ[X] := by sorry
+noncomputable instance : IsScalarTower A A[X] Aₚ[X] := IsScalarTower.of_algebraMap_eq <| by
+  have : algebraMap A[X] Aₚ[X] = Polynomial.mapRingHom (algebraMap A Aₚ) := by rfl
+  rw [this]
+  intro a
+  simp only [Polynomial.algebraMap_apply, algebraMap_eq, coe_mapRingHom, map_C]
 
-noncomputable instance : IsLocalization (Submonoid.map (algebraMap A A[X]) <| S) Aₚ[X] := by sorry
+noncomputable instance : IsLocalization (Submonoid.map (algebraMap A A[X]) <| S) Aₚ[X] := by
+  rw [Polynomial.algebraMap_eq]
+  -- #check Polynomial.isLocalization
+  sorry
 
 end
 
