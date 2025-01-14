@@ -42,10 +42,66 @@ lemma Ideal.map_isMaximal_of_surjective {R S F : Type*} [Ring R] [Ring S] [FunLi
 end
 
 section
+variable {α : Type*} [Preorder α] {x : α}
+lemma Order.zero_lt_height [OrderBot α] (h : ⊥ < x) : 0 < Order.height x := by
+  rw [← Order.height_bot (α := α)]
+  apply Order.height_strictMono
+  · exact h
+  · rw [Order.height_bot]
+    exact ENat.top_pos
+
+lemma Order.zero_lt_height_iff : 0 < Order.height x ↔ ∃ y, y < x := by
+  rw [← not_iff_not, not_lt, nonpos_iff_eq_zero, height_eq_zero, not_exists,
+    isMin_iff_forall_not_lt]
+
+lemma Order.one_lt_height_iff : 1 < Order.height x ↔ ∃ y z, z < y ∧ y < x := by
+  rw [← not_iff_not, not_lt, Order.height_le_iff']
+  constructor
+  all_goals intro h
+  · by_contra hexist
+    rcases hexist with ⟨y,z,hzlty, hyltx⟩
+    let p : LTSeries α := RelSeries.fromListChain' [z, y, x] (List.cons_ne_nil z [y, x])
+      (List.Chain'.cons hzlty <| List.chain'_pair.mpr hyltx)
+    have : RelSeries.last p = x := rfl
+    have hle1 : p.length ≤ 1 := ENat.coe_le_coe.mp (h this)
+    have hgt1 : p.length > 1 := Nat.one_lt_succ_succ [].length
+    linarith
+  · intro p hlast
+    contrapose! h
+    rw [Nat.one_lt_cast] at h
+    use p ⟨1, Nat.lt_add_right 1 h⟩, p ⟨0, Nat.zero_lt_succ p.length⟩
+    constructor
+    · exact LTSeries.strictMono p <| Batteries.compareOfLessAndEq_eq_lt.mp rfl
+    · rw [← hlast]
+      apply LTSeries.strictMono p
+      rw [Fin.mk_lt_mk, Fin.val_last]
+      exact h
+
+end
+
+section
 
 lemma Ismaximal.height_eq_one {R : Type*} [CommRing R] [IsDomain R] [IsPrincipalIdealRing R]
-    {m : Ideal R} [hm : m.IsMaximal] :
-  m.primeHeight = 1 := sorry
+    {m : Ideal R} [hm : m.IsMaximal] (h : ¬ IsField R) :
+    m.primeHeight = 1 := by
+  rw [Ideal.primeHeight_eq_orderheight]
+  apply le_antisymm
+  · by_contra! hlen
+    rw [not_le, Order.one_lt_height_iff] at hlen
+    rcases hlen with ⟨y, z, hzlty, hyltm⟩
+    have hyltm' : y.asIdeal < m := hyltm
+    have : y.asIdeal.IsMaximal := IsPrime.to_maximal_ideal <| LT.lt.ne_bot hzlty
+    have : y.asIdeal = m := by
+      apply Ideal.IsMaximal.eq_of_le this
+      exact Ideal.IsPrime.ne_top'
+      apply le_of_lt hyltm
+    exact (Eq.not_gt this.symm) hyltm
+  · have : 0 < Order.height (⟨m, hm.isPrime⟩ : PrimeSpectrum R) ↔
+      1 ≤ Order.height (⟨m, hm.isPrime⟩ : PrimeSpectrum R) := by
+      exact Iff.symm Order.one_le_iff_pos
+    rw [← this]
+    apply Order.zero_lt_height
+    exact Ideal.bot_lt_of_maximal m h
 
 lemma ringKrullDim_eq_one {R : Type*} [CommRing R] [IsDomain R] [IsPrincipalIdealRing R] :
     ringKrullDim R = 1 := sorry
@@ -73,7 +129,7 @@ lemma Ideal.primeHeight_polynomial_of_isMaximal [IsNoetherianRing A] (p : Ideal 
       rw [← this]
       exact map_comap_le
     letI : P'.IsMaximal := map_isMaximal_of_equiv e
-    have : P'.primeHeight = 1 := Ismaximal.height_eq_one
+    have : P'.primeHeight = 1 := Ismaximal.height_eq_one polynomial_not_isField
     simp only [P'] at this
     rwa [← height_eq_of_ringEquiv e <|
       P.map (Ideal.Quotient.mk <| p.map (algebraMap A A[X]))]
