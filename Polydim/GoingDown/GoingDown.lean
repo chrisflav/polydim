@@ -72,12 +72,28 @@ lemma Algebra.HasGoingDown.exists_ideal_liesOver_lt (h : Algebra.HasGoingDown R 
     simp at hpq
   use P, this
 
+lemma RelSeries.inductionOn {α : Type*} (r : Rel α α)
+  (motive : RelSeries r → Prop)
+  (h0 : (x : α) → motive (RelSeries.singleton r x))
+  (hcons : (p : RelSeries r) → (x : α) → (hx : r x p.head) → (hp : motive p) → motive (p.cons x hx))
+  (p : RelSeries r) :
+  motive p := sorry
+
 lemma Algebra.HasGoingDown.exists_ltSeries (h : Algebra.HasGoingDown R S)
     (l : LTSeries (PrimeSpectrum R)) (P : Ideal S) [P.IsPrime] [P.LiesOver l.last.asIdeal] :
     ∃ (L : LTSeries (PrimeSpectrum S)),
       L.length = l.length ∧
       L.last = ⟨P, inferInstance⟩ ∧
-      ∀ i, (algebraMap R S).specComap (L i) = l i :=
+      ∀ i, (algebraMap R S).specComap (L i) = l i := by
+
+  #check LTSeries.mk
+  set L : LTSeries (PrimeSpectrum S) := {
+    length := l.length
+    toFun := Fin.reverseInduction ⟨P, inferInstance⟩ (λ i prev ↦ by
+      #check h.exists_ideal_liesOver_lt
+      sorry)
+    step := sorry
+  }
   sorry
 
 end
@@ -85,3 +101,15 @@ end
 lemma Algebra.HasGoingDown.of_flat [Module.Flat A B] : Algebra.HasGoingDown A B := by
   introv p _ Q _ _ hpq
   apply exists_isPrime_and_liesOver_of_isPrime_of_le_of_liesOver p q hpq Q
+
+
+def descendingMap (n : ℕ) : Fin (n + 1) → ℕ :=
+  Fin.reverseInduction
+    (motive := λ _ ↦ ℕ) -- The return type is ℕ for all inputs
+    (1) -- f n = 1 (base case)
+    (λ i prev ↦ 2^prev) -- f k = 2^(f (k+1))
+
+-- Let's test it with a small example
+#eval descendingMap 2 ⟨0, by norm_num⟩ -- should give 2^(2^1)
+#eval descendingMap 2 ⟨1, by norm_num⟩ -- should give 2^1
+#eval descendingMap 2 ⟨2, by norm_num⟩ -- should give 1
