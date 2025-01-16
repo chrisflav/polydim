@@ -57,7 +57,7 @@ def Algebra.HasGoingDown (R S : Type*) [CommRing R] [CommRing S] [Algebra R S] :
   ∀ (p q : Ideal R) [p.IsPrime] [q.IsPrime] (Q : Ideal S) [Q.IsPrime] [Q.LiesOver q],
     p ≤ q → ∃ (P : Ideal S), P ≤ Q ∧ P.IsPrime ∧ P.LiesOver p
 
-variable {R S : Type*} [CommRing R] [CommRing S] [Algebra R S]
+variable (R S : Type*) [CommRing R] [CommRing S] [Algebra R S]
 
 lemma Algebra.HasGoingDown.exists_ideal_liesOver_lt (h : Algebra.HasGoingDown R S) (p q : Ideal R)
     [p.IsPrime] [q.IsPrime] (Q : Ideal S) [Q.IsPrime] [Q.LiesOver q] (hpq : p < q):
@@ -92,8 +92,6 @@ lemma RelSeries.head_toList {α : Type*} {r : Rel α α} (p : RelSeries r) :
 
 lemma RelSeries.append_toList {α : Type*} {r : Rel α α} (p q : RelSeries r) (rel : r p.last q.head) :
     (p.append q rel).toList = p.toList ++ q.toList := by
-  -- unfold List.append
-  -- unfold toList
   apply List.ext_getElem (by
     simp only [toList, append_length, List.ofFn_succ, Fin.succ_zero_eq_one, List.length_cons,
       List.length_ofFn, List.append_eq, List.cons_append, List.length_append, add_left_inj]
@@ -142,7 +140,7 @@ lemma Algebra.HasGoingDown.exists_ltSeries (h : Algebra.HasGoingDown R S)
         exact (RelSeries.length_toList L) ▸ Nat.zero_lt_succ L.length)
     rw [RingHom.specComap, PrimeSpectrum.ext_iff] at this
     exact this.symm
-  obtain ⟨Q, Qlt, hQ, Qlo⟩ := h.exists_ideal_liesOver_lt q.asIdeal l.head.asIdeal L.head.asIdeal lt
+  obtain ⟨Q, Qlt, hQ, Qlo⟩ := h.exists_ideal_liesOver_lt _ _ q.asIdeal l.head.asIdeal L.head.asIdeal lt
   use L.cons ⟨Q, hQ⟩ Qlt
   simp only [RelSeries.cons_length, add_left_inj, RelSeries.last_cons]
   exact ⟨len, last, by
