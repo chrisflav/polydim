@@ -57,7 +57,7 @@ def Algebra.HasGoingDown (R S : Type*) [CommRing R] [CommRing S] [Algebra R S] :
   ∀ (p q : Ideal R) [p.IsPrime] [q.IsPrime] (Q : Ideal S) [Q.IsPrime] [Q.LiesOver q],
     p ≤ q → ∃ (P : Ideal S), P ≤ Q ∧ P.IsPrime ∧ P.LiesOver p
 
-variable (R S : Type*) [CommRing R] [CommRing S] [Algebra R S]
+variable {R S : Type*} [CommRing R] [CommRing S] [Algebra R S]
 
 lemma Algebra.HasGoingDown.exists_ideal_liesOver_lt (h : Algebra.HasGoingDown R S) (p q : Ideal R)
     [p.IsPrime] [q.IsPrime] (Q : Ideal S) [Q.IsPrime] [Q.LiesOver q] (hpq : p < q):
@@ -77,39 +77,80 @@ lemma RelSeries.inductionOn {α : Type*} (r : Rel α α)
   (h0 : (x : α) → motive (RelSeries.singleton r x))
   (hcons : (p : RelSeries r) → (x : α) → (hx : r x p.head) → (hp : motive p) → motive (p.cons x hx))
   (p : RelSeries r) :
-  motive p := sorry
+  motive p := by sorry
+
+lemma RelSeries.toList.get_eq_toFun {α : Type*} {r : Rel α α} (p : RelSeries r) (i : Fin (p.length + 1)) :
+    p.toFun i = p.toList[i] := by
+  simp only [Fin.getElem_fin, toList, List.getElem_ofFn p.toFun]
+
+lemma RelSeries.toList.getElem_eq_toFun {α : Type*} {r : Rel α α} (p : RelSeries r) (i : ℕ) (h : i < p.length + 1) :
+    p.toFun ⟨i, h⟩ = p.toList[i]'(length_toList p ▸ h) := by
+  simp only [Fin.getElem_fin, toList, List.getElem_ofFn p.toFun]
+
+lemma RelSeries.head_toList {α : Type*} {r : Rel α α} (p : RelSeries r) :
+    p.head = p.toList[0] := by rw [head, toList.get_eq_toFun]; rfl
+
+lemma RelSeries.append_toList {α : Type*} {r : Rel α α} (p q : RelSeries r) (rel : r p.last q.head) :
+    (p.append q rel).toList = p.toList ++ q.toList := by
+  -- unfold List.append
+  -- unfold toList
+  apply List.ext_getElem (by
+    simp only [toList, append_length, List.ofFn_succ, Fin.succ_zero_eq_one, List.length_cons,
+      List.length_ofFn, List.append_eq, List.cons_append, List.length_append, add_left_inj]
+    rfl)
+  intro n h1 h2
+  rw [← RelSeries.toList.getElem_eq_toFun _ _ (length_toList _ ▸ h1)]
+  simp only [append_length, List.ofFn_succ, Fin.succ_zero_eq_one, List.length_cons,
+    List.length_ofFn] at h1
+  unfold append
+  by_cases h : n < p.length + 1
+  · simp only [List.getElem_append_left (length_toList p ▸ h), Function.comp_apply, Fin.cast_mk,
+      Fin.append, Fin.addCases, dif_pos h, RelSeries.toList.getElem_eq_toFun p]
+    rfl
+  simp only [List.getElem_append_right (length_toList p ▸ not_lt.mp h), Function.comp_apply,
+    Fin.cast_mk, Fin.append, Fin.addCases, dif_neg h, Fin.subNat_mk, Fin.natAdd_mk,
+    eq_rec_constant, length_toList, RelSeries.toList.getElem_eq_toFun]
+
+lemma RelSeries.cons_toList {α : Type*} {r : Rel α α} (p : RelSeries r) (a : α) (rel : r a p.head) :
+    (p.cons a rel).toList = a :: p.toList := by rw [cons, append_toList]; rfl
 
 lemma Algebra.HasGoingDown.exists_ltSeries (h : Algebra.HasGoingDown R S)
-    (l : LTSeries (PrimeSpectrum R)) (P : Ideal S) [P.IsPrime] [P.LiesOver l.last.asIdeal] :
+    (l : LTSeries (PrimeSpectrum R)) (P : Ideal S) [P.IsPrime] [lo : P.LiesOver l.last.asIdeal] :
     ∃ (L : LTSeries (PrimeSpectrum S)),
       L.length = l.length ∧
       L.last = ⟨P, inferInstance⟩ ∧
-      ∀ i, (algebraMap R S).specComap (L i) = l i := by
-
-  #check LTSeries.mk
-  set L : LTSeries (PrimeSpectrum S) := {
-    length := l.length
-    toFun := Fin.reverseInduction ⟨P, inferInstance⟩ (λ i prev ↦ by
-      #check h.exists_ideal_liesOver_lt
-      sorry)
-    step := sorry
-  }
-  sorry
+      List.map (algebraMap R S).specComap L.toList = l.toList := by
+  induction' l using RelSeries.inductionOn with q l q lt ih generalizing P
+  use RelSeries.singleton _ ⟨P, inferInstance⟩
+  simp only [RelSeries.singleton_length, RelSeries.last_singleton, true_and]
+  apply List.ext_get
+  · simp only [List.length_map, RelSeries.length_toList, RelSeries.singleton_length, zero_add]
+  intro n lt1 lt2
+  simp only [List.length_map, RelSeries.length_toList, RelSeries.singleton_length, zero_add,
+    Nat.lt_one_iff] at lt1 lt2
+  simp only [List.get_eq_getElem, List.getElem_map, lt1]
+  exact PrimeSpectrum.ext_iff.mpr lo.over.symm
+  simp only [RelSeries.last_cons] at lo
+  obtain ⟨L, len, last, spec⟩ := ih P
+  letI : L.head.asIdeal.LiesOver l.head.asIdeal := by
+    constructor
+    rw [L.head_toList, l.head_toList, Ideal.under_def]
+    have : (algebraMap R S).specComap L.toList[0] = l.toList[0] := by
+      rw [List.getElem_map_rev (algebraMap R S).specComap]
+      exact List.getElem_of_eq spec (i := 0) (by
+        rw [List.length_map]
+        exact (RelSeries.length_toList L) ▸ Nat.zero_lt_succ L.length)
+    rw [RingHom.specComap, PrimeSpectrum.ext_iff] at this
+    exact this.symm
+  obtain ⟨Q, Qlt, hQ, Qlo⟩ := h.exists_ideal_liesOver_lt q.asIdeal l.head.asIdeal L.head.asIdeal lt
+  use L.cons ⟨Q, hQ⟩ Qlt
+  simp only [RelSeries.cons_length, add_left_inj, RelSeries.last_cons]
+  exact ⟨len, last, by
+  simp only [RelSeries.cons_toList, List.map_cons, spec, List.cons.injEq, and_true]
+  exact PrimeSpectrum.ext_iff.mpr Qlo.over.symm⟩
 
 end
 
 lemma Algebra.HasGoingDown.of_flat [Module.Flat A B] : Algebra.HasGoingDown A B := by
   introv p _ Q _ _ hpq
   apply exists_isPrime_and_liesOver_of_isPrime_of_le_of_liesOver p q hpq Q
-
-
-def descendingMap (n : ℕ) : Fin (n + 1) → ℕ :=
-  Fin.reverseInduction
-    (motive := λ _ ↦ ℕ) -- The return type is ℕ for all inputs
-    (1) -- f n = 1 (base case)
-    (λ i prev ↦ 2^prev) -- f k = 2^(f (k+1))
-
--- Let's test it with a small example
-#eval descendingMap 2 ⟨0, by norm_num⟩ -- should give 2^(2^1)
-#eval descendingMap 2 ⟨1, by norm_num⟩ -- should give 2^1
-#eval descendingMap 2 ⟨2, by norm_num⟩ -- should give 1
