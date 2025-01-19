@@ -72,12 +72,47 @@ lemma Algebra.HasGoingDown.exists_ideal_liesOver_lt (h : Algebra.HasGoingDown R 
     simp at hpq
   use P, this
 
+section RelSeries
+
+lemma RelSeries.cons_self_tail {α : Type*} {r : Rel α α} (p : RelSeries r) (len_pos : p.length ≠ 0) : p = (p.tail len_pos).cons p.head (p.3 ⟨0, Nat.zero_lt_of_ne_zero len_pos⟩) := by
+  ext n
+  · rw [cons_length, tail_length]
+    exact (Nat.succ_pred_eq_of_ne_zero len_pos).symm
+  unfold cons append Fin.append Fin.addCases
+  by_cases h : n.1 = 0
+  have : n = 0 := Fin.eq_of_val_eq h
+  simp only [singleton_length, tail_length, zero_add, Nat.lt_one_iff, singleton_toFun, tail_toFun,
+    Function.comp_apply, Fin.coe_cast, dif_pos h, this]
+  rfl
+  simp only [singleton_length, tail_length, zero_add, Nat.lt_one_iff, singleton_toFun, tail_toFun,
+    Function.comp_apply, eq_rec_constant, Fin.coe_cast, dif_neg h]
+  congr
+  exact Fin.val_inj.mp (Nat.succ_pred_eq_of_ne_zero h).symm
+
 lemma RelSeries.inductionOn {α : Type*} (r : Rel α α)
   (motive : RelSeries r → Prop)
   (h0 : (x : α) → motive (RelSeries.singleton r x))
   (hcons : (p : RelSeries r) → (x : α) → (hx : r x p.head) → (hp : motive p) → motive (p.cons x hx))
   (p : RelSeries r) :
-  motive p := by sorry
+  motive p := by
+  have : ∀ (n : ℕ) (heq : p.length = n), motive p := by
+    intro n
+    induction' n with d hd generalizing p
+    · intro h
+      have : p = singleton r p.head := by
+        apply ext h
+        ext n
+        have : n = 0 := by convert Fin.eq_zero n; repeat rw [h]
+        rw [this]
+        rfl
+      exact this ▸ h0 p.head
+    intro h
+    set q := p.tail (h ▸ d.zero_ne_add_one.symm)
+    have lq := p.tail_length (h ▸ d.zero_ne_add_one.symm)
+    nth_rw 3 [h] at lq
+    exact (p.cons_self_tail (h ▸ d.zero_ne_add_one.symm)) ▸
+      (hcons q p.head (p.3 ⟨0, h ▸ d.zero_lt_succ⟩) (hd q lq))
+  exact this p.length rfl
 
 lemma RelSeries.toList.get_eq_toFun {α : Type*} {r : Rel α α} (p : RelSeries r) (i : Fin (p.length + 1)) :
     p.toFun i = p.toList[i] := by
@@ -111,6 +146,8 @@ lemma RelSeries.append_toList {α : Type*} {r : Rel α α} (p q : RelSeries r) (
 
 lemma RelSeries.cons_toList {α : Type*} {r : Rel α α} (p : RelSeries r) (a : α) (rel : r a p.head) :
     (p.cons a rel).toList = a :: p.toList := by rw [cons, append_toList]; rfl
+
+end RelSeries
 
 lemma Algebra.HasGoingDown.exists_ltSeries (h : Algebra.HasGoingDown R S)
     (l : LTSeries (PrimeSpectrum R)) (P : Ideal S) [P.IsPrime] [lo : P.LiesOver l.last.asIdeal] :
