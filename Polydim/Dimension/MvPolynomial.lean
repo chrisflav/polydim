@@ -109,10 +109,6 @@ noncomputable def Infinite.finEmbedding : (Fin n) ↪ ι where
   toFun i := Infinite.natEmbedding ι i.val
   inj' := Function.Injective.comp (Infinite.natEmbedding ι).injective Fin.val_injective
 
-def oqin : Fin n → Fin (n + 1) := by
-  exact fun a ↦ Fin.castAdd 1 a
-
-
 lemma Infinite.finEmbedding_castAdd (m : ℕ) : Infinite.finEmbedding ι n =
     (Infinite.finEmbedding ι (n + m)) ∘ (Fin.castAdd m) := by
   ext x
@@ -125,20 +121,18 @@ lemma Infinite.finEmbedding_val : Infinite.finEmbedding ι n =
   unfold Infinite.finEmbedding
   rw [Function.Embedding.coeFn_mk, Function.comp_apply]
 
-lemma MvPolynomial.killCompl_FincastAdd_comp_killCompl_finEmbedding_aux
-    (m : ℕ) [CommRing R] [IsNoetherianRing R] [Nontrivial R] :
+lemma MvPolynomial.killCompl_FincastAdd_comp_killCompl_finEmbedding_aux (m : ℕ) [CommSemiring R] :
     (MvPolynomial.killCompl (R := R) (Fin.castAdd_injective n m)).comp
     (MvPolynomial.killCompl (Infinite.finEmbedding ι (n + m)).injective) =
     (MvPolynomial.killCompl (R := R) (Infinite.finEmbedding ι n).injective) := by
   rw [killCompl_killCompl]
 
 -- The ideal we want is (X i, when i is not 1 ... n)
-noncomputable def MvPolynomial.ker_killCompl_finEmbedding_aux
-    [CommRing R] [IsNoetherianRing R] [Nontrivial R] :=
+noncomputable def MvPolynomial.ker_killCompl_finEmbedding_aux [CommSemiring R] :=
   RingHom.ker (MvPolynomial.killCompl (R := R) <| (Infinite.finEmbedding ι n).injective)
 
 lemma MvPolynomial.ker_killCompl_finEmbedding_le_aux
-    [CommRing R] [IsNoetherianRing R] [Nontrivial R] :
+    [CommSemiring R] [Nontrivial R] :
     MvPolynomial.ker_killCompl_finEmbedding_aux R ι (n + 1) <
     MvPolynomial.ker_killCompl_finEmbedding_aux R ι n := by
   unfold MvPolynomial.ker_killCompl_finEmbedding_aux
@@ -173,7 +167,8 @@ lemma MvPolynomial.ker_killCompl_finEmbedding_isPrime_aux [Field R] :
     (killCompl_surjective (R := R) <| (Infinite.finEmbedding ι n).injective)
   exact Equiv.isDomain <| e
 
-noncomputable def MvPolynomial.infinite_LTSeries_aux [Field R] : LTSeries (PrimeSpectrum (MvPolynomial ι R)) where
+noncomputable def MvPolynomial.infinite_LTSeries_aux [Field R] :
+    LTSeries (PrimeSpectrum (MvPolynomial ι R)) where
   length := n
   toFun i := ⟨MvPolynomial.ker_killCompl_finEmbedding_aux R ι (n - i),
     MvPolynomial.ker_killCompl_finEmbedding_isPrime_aux R ι (n - i)⟩
