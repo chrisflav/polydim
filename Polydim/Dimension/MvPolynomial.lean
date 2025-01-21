@@ -19,18 +19,109 @@ lemma MvPolynomial.ringKrullDim_eq_ringKrullDim_add {R : Type*} [CommRing R] [Is
   rw [Nat.card_eq_fintype_card]
   -- use `MvPolynomial.renameEquiv`
 
-#check Order.krullDim_le_of_strictMono
-#check MvPolynomial.rename
-#check MvPolynomial.rename_injective
-#check Polynomial.quotientSpanXSubCAlgEquiv
-#check MvPolynomial.sumAlgEquiv
+section
 
-noncomputable def weg {ι : Type*} [Infinite ι] : ℕ → ι := Infinite.natEmbedding ι
+open MvPolynomial
+
+variable {σ τ υ R : Type*} [CommSemiring R] {f : σ → τ} (hf : Function.Injective f)
+
+lemma killCompl_surjective : Function.Surjective (killCompl (R := R) hf) := by
+  apply Function.HasRightInverse.surjective
+  use rename f
+  intro p
+  exact killCompl_rename_app hf p
+
+open Classical in
+lemma rename_comp_killCompl :
+    (rename (R := R) f).comp (killCompl hf) =
+    MvPolynomial.aeval (fun i ↦ if i ∈ Set.range f then MvPolynomial.X i else 0) := by
+  apply MvPolynomial.algHom_ext
+  intro i
+  rw [killCompl]
+  simp only [aeval_eq_bind₁, AlgHom.coe_comp, Function.comp_apply, bind₁_X_right]
+  by_cases h : i ∈ Set.range f
+  · simp only [h, ↓reduceDIte, rename_X, ↓reduceIte]
+    congr
+    have :f ((Equiv.ofInjective f hf).symm ⟨i, h⟩) = (f ∘ (Equiv.ofInjective f hf).symm) ⟨i, h⟩ :=by
+      simp only [Function.comp_apply]
+    rw [this, Equiv.self_comp_ofInjective_symm]
+  · simp only [h, ↓reduceDIte, map_zero, ↓reduceIte]
+
+open Classical in
+lemma rename_comp_killCompl_apply (p : MvPolynomial τ R) :
+    (rename (R := R) f) ((killCompl hf) p) =
+    (MvPolynomial.aeval (fun i ↦ if i ∈ Set.range f then MvPolynomial.X i else 0)) p :=
+  congrFun (congrArg DFunLike.coe (rename_comp_killCompl hf)) p
+
+open Classical in
+lemma ker_killCompl_eq_ker_aeval : RingHom.ker (MvPolynomial.killCompl (R := R) hf) =
+    RingHom.ker (MvPolynomial.aeval (S₁ := MvPolynomial τ R)
+    (fun i ↦ if i ∈ Set.range f then MvPolynomial.X i else 0)) := by
+  ext p
+  rw [RingHom.mem_ker, RingHom.mem_ker, ← rename_comp_killCompl_apply hf]
+  exact Iff.symm (map_eq_zero_iff (rename f) (rename_injective f hf))
+
+end
+
+section
+
+lemma MvPolynomial.linearMap_eq_linearMap {R σ : Type*} [CommSemiring R]
+    {M : Type*} [AddCommMonoid M] [Module R M] {f g : MvPolynomial σ R →ₗ[R] M}
+    (h : ∀ (s : σ →₀ ℕ), f ∘ₗ monomial s = g ∘ₗ monomial s) (p : MvPolynomial σ R) :
+    f p = g p := LinearMap.congr_fun (MvPolynomial.linearMap_ext h) p
+
+end
+
+section
+
+variable (R : Type*) (ι : Type*) [Infinite ι] (n : ℕ)
+
+noncomputable def qiucbc : (Fin n) → ι := fun i ↦ Infinite.natEmbedding ι i.val
+
+lemma uiqg : (qiucbc ι n).Injective :=
+  Function.Injective.comp (Infinite.natEmbedding ι).injective Fin.val_injective
+
+lemma qiubdwq [CommRing R] [IsNoetherianRing R] [Nontrivial R] :
+    Function.Surjective (MvPolynomial.killCompl (R := R) <| uiqg ι n) := by
+  apply Function.HasRightInverse.surjective
+  use MvPolynomial.rename (qiucbc ι n)
+  intro p
+  exact MvPolynomial.killCompl_rename_app (uiqg ι n) p
+
+noncomputable def w2ohd [CommRing R] [IsNoetherianRing R] [Nontrivial R] :=
+  RingHom.ker (MvPolynomial.killCompl (R := R) <| uiqg ι n)
+
+#check MvPolynomial.linearMap_ext
+#check MvPolynomial.monomial
 
 
+lemma qwugqw' [CommRing R] [IsNoetherianRing R] [Nontrivial R] :
+    w2ohd R ι (n + 1) < w2ohd R ι n := by
+  classical
+  repeat rw [w2ohd, ker_killCompl_eq_ker_aeval]
+  constructor
+  · intro p hp
+    rw [SetLike.mem_coe, RingHom.mem_ker] at *
+    apply MvPolynomial.aeval_eq_zero
+    intro d hne
 
-def liuwegf {R : Type*} [Field R] [IsNoetherianRing R]
-    [Nontrivial R] {ι : Type*} [Infinite ι] : ℕ → PrimeSpectrum (MvPolynomial ι R) := sorry
+    sorry
+  · sorry
+
+noncomputable def qoif [CommRing R] [IsNoetherianRing R] [Nontrivial R] :=
+  RingHom.quotientKerEquivOfSurjective (qiubdwq R ι n)
+
+lemma qilugf' [Field R] : (w2ohd R ι n).IsPrime := by
+  rw [← Ideal.Quotient.isDomain_iff_prime]
+  exact Equiv.isDomain <| qoif R ι n
+
+noncomputable def qowinc [Field R] : LTSeries (PrimeSpectrum (MvPolynomial ι R)) where
+  length := n
+  toFun i := ⟨w2ohd R ι (n - i), qilugf' R ι (n - i)⟩
+  step i := by
+    dsimp only [Fin.coe_castSucc, Fin.val_succ]
+    have : n - i - 1 + 1 = n - i := Nat.sub_add_cancel <| Nat.le_sub_of_add_le' i.prop
+    exact this ▸ qwugqw' R ι (n - i - 1)
 
 lemma MvPolynomial.ringKrullDim_eq_top_of_infinite {R : Type*} [CommRing R] [IsNoetherianRing R]
     [Nontrivial R] {ι : Type*} [Infinite ι] :
@@ -47,5 +138,11 @@ lemma MvPolynomial.ringKrullDim_eq_top_of_infinite {R : Type*} [CommRing R] [IsN
     -- `MvPolynomial.quotientEquivQuotientMvPolynomial`
   -- now the ideals `(X_1, X_2, ..., X_i)` are prime ideals of `MvPolynomial ι R`
   -- and form an infinite chain
-  · rw [ringKrullDim]
-    sorry
+  · letI : Field R := hisfield.toField
+    rw [ringKrullDim, Order.krullDim_eq_top_iff]
+    constructor
+    intro n
+    use qowinc R ι n
+    rfl
+
+end
